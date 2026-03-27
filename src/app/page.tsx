@@ -6,46 +6,62 @@ export default async function Home() {
   const products = response.body?.data?.products?.edges || [];
 
   return (
-    <main className="p-10 font-mono">
-      <h1 className="text-2xl mb-10 border-b pb-2">NOTHING STORE DATA & IMAGE TEST:</h1>
+    <main className="p-10 font-ntype">
+      {/* Nothing Aesthetic Header */}
+      <div className="mb-20">
+        <h1 className="font-ndot text-6xl tracking-tighter uppercase leading-none">
+          Nothing <span className="text-brandRed">(R)</span>
+        </h1>
+        <p className="font-ntype opacity-40 text-xs tracking-[0.2em] mt-2 uppercase">
+          Inventory Status: System Connected
+        </p>
+      </div>
       
       {products.length > 0 ? (
-        <ul className="space-y-10">
+        <ul className="grid grid-cols-1 gap-1 border-t border-white/10">
           {products.map((item: any) => {
             const product = item.node;
-            const image = product.images.edges[0]?.node; // fetching product images 
+            const image = product.images.edges[0]?.node;
 
             return (
-              <li key={product.id} className="grid grid-cols-1 md:grid-cols-[100px,1fr] gap-6 border border-white/20 p-5 rounded-lg">
+              <li key={product.id} className="group grid grid-cols-1 md:grid-cols-[150px,1fr,auto] items-center gap-10 py-8 border-b border-white/10 hover:bg-white/[0.02] transition-colors px-4">
                 
-                {/* Image Section */}
-                <div className="relative w-[100px] h-[100px] bg-neutral-900 flex items-center justify-center rounded-lg overflow-hidden border border-white/10">
+                {/* Image Section - High Contrast */}
+                <div className="relative aspect-square w-full bg-[#111] flex items-center justify-center overflow-hidden border border-white/5 grayscale group-hover:grayscale-0 transition-all duration-500">
                   {image ? (
                     <Image
                       src={image.url}
                       alt={image.altText || product.title}
-                      width={image.width || 200}
-                      height={image.height || 200}
-                      className="object-cover w-full h-full"
+                      width={300}
+                      height={300}
+                      className="object-contain w-[80%] h-[80%]"
                     />
                   ) : (
-                    
-                    <div className="text-[10px] text-white/40 uppercase">No Image</div>
+                    <div className="font-ndot text-[10px] text-white/20">NO_IMG</div>
                   )}
                 </div>
 
                 {/* Details Section */}
-                <div className="flex flex-col justify-center gap-2">
-                  <p className="font-bold text-2xl uppercase tracking-tight">{product.title}</p>
-                  <p className="opacity-40 text-[10px] tracking-widest">{product.id}</p>
-                  <p className="text-sm opacity-70 line-clamp-1">{product.description}</p>
+                <div className="flex flex-col gap-1">
+                  <p className="font-ndot text-3xl uppercase tracking-tight">{product.title}</p>
+                  <p className="font-ntype text-sm opacity-50 max-w-md line-clamp-2">{product.description}</p>
+                </div>
+
+                {/* Technical Meta - Pure Nothing Vibes */}
+                <div className="text-right hidden md:block">
+                  <p className="font-ndot text-xs text-white/30 tracking-widest uppercase">ID: {product.handle}</p>
+                  <button className="mt-4 font-ndot border border-white px-6 py-2 text-xs hover:bg-white hover:text-black transition-all uppercase">
+                    View Specs
+                  </button>
                 </div>
               </li>
             );
           })}
         </ul>
       ) : (
-        <p className="text-red-500">WALANG DATA. Check your .env or API keys!</p>
+        <div className="font-ndot text-red-500 animate-pulse">
+          ERROR: CONNECTION_FAILED // CHECK_API_KEYS
+        </div>
       )}
     </main>
   );

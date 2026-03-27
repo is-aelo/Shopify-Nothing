@@ -1,26 +1,35 @@
 @import "tailwindcss";
 
+/* 1. Global Color Variables - Black & White Only */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #000000;
+  --foreground: #ffffff;
 }
 
+/* 2. Map Nothing Fonts to Tailwind Classes */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  
+  /* Usage: className="font-ndot" */
+  --font-ndot: var(--font-ndot), ui-monospace, monospace;
+  /* Usage: className="font-ntype" */
+  --font-ntype: var(--font-ntype), ui-sans-serif, system-ui;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* 3. Base Body Styling */
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  /* Default body font set to Nothing Type */
+  font-family: var(--font-ntype), sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 4. Global Dot Matrix Utility */
+.dot-matrix {
+  font-family: var(--font-ndot);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
