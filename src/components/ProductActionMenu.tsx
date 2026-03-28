@@ -1,9 +1,11 @@
 "use client";
 
 import { motion } from 'framer-motion';
-import { Plus, Minus, CreditCard } from "lucide-react";
+import { Plus, Minus, CreditCard, ShoppingBag } from "lucide-react";
+import { useCartStore } from '@/store/useCartStore';
 
 interface ProductActionMenuProps {
+  product: any;
   quantity: number;
   setQuantity: (quantity: number) => void;
   selectedVariant: any;
@@ -14,6 +16,7 @@ interface ProductActionMenuProps {
 }
 
 export default function ProductActionMenu({
+  product,
   quantity,
   setQuantity,
   selectedVariant,
@@ -23,12 +26,38 @@ export default function ProductActionMenu({
   handleBuyNow
 }: ProductActionMenuProps) {
 
+  const addItem = useCartStore((state) => state.addItem);
+  const openCart = useCartStore((state) => state.openCart);
+
   const formatPrice = (amt: string | number, code: string) => 
     new Intl.NumberFormat('en-PH', { 
       style: 'currency', 
       currency: code || 'PHP',
       maximumFractionDigits: 0 
     }).format(Number(amt));
+
+  const handleAddToBasket = () => {
+    if (!selectedVariant) return;
+
+    addItem({
+      id: product.id,
+      variantId: selectedVariant.id,
+      title: product.title,
+      variantTitle: selectedVariant.title,
+      price: selectedVariant.price,
+      image: product.images?.edges?.[0]?.node?.url,
+      quantity: quantity,
+      handle: product.handle,
+      allVariants: product.variants?.edges?.map((edge: any) => ({
+        id: edge.node.id,
+        title: edge.node.title,
+        price: edge.node.price,
+        image: edge.node.image?.url
+      })) || []
+    });
+
+    openCart();
+  };
 
   return (
     <div className="fixed bottom-6 md:bottom-8 left-0 right-0 z-50 px-4 pointer-events-none">
@@ -38,7 +67,6 @@ export default function ProductActionMenu({
         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
         className="max-w-[580px] mx-auto bg-white/80 backdrop-blur-2xl border border-[#E1E2E3] rounded-full p-1.5 md:p-2 shadow-2xl flex items-center gap-1.5 md:gap-2 pointer-events-auto"
       >
-        {/* QUANTITY CONTROLS */}
         <div className="hidden sm:flex items-center px-4 gap-4 border-r border-[#E1E2E3]">
           <button 
             onClick={() => setQuantity(Math.max(1, quantity - 1))} 
@@ -59,12 +87,15 @@ export default function ProductActionMenu({
           </button>
         </div>
         
-        {/* BASKET BUTTON (Placeholder for now) */}
-        <button className="flex-1 bg-white border border-[#E1E2E3] text-[#07080F] h-10 md:h-12 rounded-full font-ndot uppercase text-[9px] md:text-[10px] tracking-[0.1em] hover:bg-[#07080F] hover:text-white transition-all duration-500 shadow-sm">
-          Basket
+        <button 
+          onClick={handleAddToBasket}
+          disabled={!selectedVariant}
+          className="flex-1 bg-white border border-[#E1E2E3] text-[#07080F] h-10 md:h-12 rounded-full font-ndot uppercase text-[9px] md:text-[10px] tracking-[0.1em] hover:bg-[#F1F1F1] transition-all duration-300 shadow-sm flex items-center justify-center gap-2 disabled:opacity-50"
+        >
+          <ShoppingBag size={14} strokeWidth={1.5} />
+          <span className="hidden xs:inline">Basket</span>
         </button>
         
-        {/* BUY NOW BUTTON */}
         <button 
           onClick={handleBuyNow}
           disabled={!selectedVariant}

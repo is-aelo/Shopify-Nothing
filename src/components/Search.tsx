@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search as SearchIcon, X, ArrowRight, History } from "lucide-react";
 import Link from 'next/link';
-import { getSearchResults } from '@/lib/shopify';
+import { useSearchStore } from '@/store/useSearchStore';
 
 interface SearchProps {
   isOpen: boolean;
@@ -12,52 +12,31 @@ interface SearchProps {
 }
 
 export default function Search({ isOpen, onClose }: SearchProps) {
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<any[]>([]);
+  const { query, setQuery, results, isLoading, fetchResults, clearResults } = useSearchStore();
   const [recentItems, setRecentItems] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // 1. Lifecycle: Sync Focus & History
+  // 1. Lifecycle & History
   useEffect(() => {
-    let focusTimer: NodeJS.Timeout;
-
     if (isOpen) {
       const history = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
       setRecentItems(history);
-      
-      // Technical auto-focus delay for smooth transition
-      focusTimer = setTimeout(() => inputRef.current?.focus(), 150);
+      setTimeout(() => inputRef.current?.focus(), 150);
+    } else {
+      // Clear search when modal closes (Optional, para fresh lagi)
+      // clearResults(); 
     }
-
-    return () => clearTimeout(focusTimer);
   }, [isOpen]);
 
-  // 2. Search Logic with Debounce
+  // 2. Optimized Debounce Logic
   useEffect(() => {
-    if (query.trim() === "") {
-      setResults([]);
-      return;
-    }
-
-    const fetchProducts = async () => {
-      setIsLoading(true);
-      try {
-        const response = await getSearchResults(query);
-        const products = response?.body?.data?.products?.edges?.map((edge: any) => edge.node) || [];
-        setResults(products);
-      } catch (err) {
-        console.error("SEARCH_SYSTEM_ERROR:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    const timeoutId = setTimeout(fetchProducts, 400); // Optimized for API rate limits
+    const timeoutId = setTimeout(() => {
+      fetchResults(query);
+    }, 400); 
     return () => clearTimeout(timeoutId);
-  }, [query]);
+  }, [query, fetchResults]);
 
-  // 3. Accessibility: Close on ESC
+  // 3. Accessibility
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -77,11 +56,7 @@ export default function Search({ isOpen, onClose }: SearchProps) {
         >
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-[18px]">
-            <button 
-              onClick={onClose} 
-              className="p-2 -ml-2 hover:opacity-50 transition-opacity text-black"
-              aria-label="Close search"
-            >
+            <button onClick={onClose} className="p-2 -ml-2 hover:opacity-50 text-black">
               <X strokeWidth={1} size={22} />
             </button>
             <span className="font-ntypeMono text-[10px] uppercase tracking-[0.3em] text-black/40">
@@ -111,8 +86,7 @@ export default function Search({ isOpen, onClose }: SearchProps) {
             </div>
 
             <div className="mt-12 overflow-y-auto max-h-[60vh] pr-4 custom-scrollbar pb-20">
-              
-              {/* CASE 1: RECENTLY VIEWED */}
+              {/* RECENTLY VIEWED (Logic same as before) */}
               {query.length === 0 && recentItems.length > 0 && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
                   <div className="flex items-center gap-2 mb-6 opacity-40">
@@ -142,38 +116,35 @@ export default function Search({ isOpen, onClose }: SearchProps) {
                 </div>
               )}
 
-              {/* CASE 2: SEARCH RESULTS */}
+              {/* SEARCH RESULTS */}
               {results.length > 0 && (
                 <div className="grid grid-cols-1 gap-2 animate-in fade-in duration-300">
                   <p className="font-ntypeMono text-[10px] uppercase tracking-widest text-black/50 mb-4">
                     Matches_Found: {results.length.toString().padStart(2, '0')}
                   </p>
-                  {results.map((product: any) => {
-                    const image = product.images?.edges?.[0]?.node;
-                    return (
-                      <Link 
-                        key={product.handle}
-                        href={`/products/${product.handle}`}
-                        onClick={onClose}
-                        className="group flex items-center justify-between border border-black/5 p-6 hover:bg-black transition-all"
-                      >
-                        <div className="flex items-center gap-6">
-                          <div className="h-16 w-16 bg-black/5 flex items-center justify-center grayscale group-hover:invert transition-all">
-                            {image && <img src={image.url} alt="" className="h-[80%] w-[80%] object-contain" />}
-                          </div>
-                          <div>
-                            <h3 className="font-ndot text-xl uppercase group-hover:text-white text-black transition-colors">{product.title}</h3>
-                            <p className="font-ntypeMono text-[10px] text-black/40 group-hover:text-white/40 uppercase">UID: {product.handle}</p>
-                          </div>
+                  {results.map((product: any) => (
+                    <Link 
+                      key={product.handle}
+                      href={`/products/${product.handle}`}
+                      onClick={onClose}
+                      className="group flex items-center justify-between border border-black/5 p-6 hover:bg-black transition-all"
+                    >
+                      <div className="flex items-center gap-6">
+                        <div className="h-16 w-16 bg-black/5 flex items-center justify-center grayscale group-hover:invert transition-all">
+                          {product.images?.edges?.[0]?.node?.url && <img src={product.images.edges[0].node.url} alt="" className="h-[80%] w-[80%] object-contain" />}
                         </div>
-                        <ArrowRight strokeWidth={1} size={24} className="text-black group-hover:text-white opacity-0 group-hover:opacity-100 transition-all" />
-                      </Link>
-                    );
-                  })}
+                        <div>
+                          <h3 className="font-ndot text-xl uppercase group-hover:text-white text-black transition-colors">{product.title}</h3>
+                          <p className="font-ntypeMono text-[10px] text-black/40 group-hover:text-white/40 uppercase">UID: {product.handle}</p>
+                        </div>
+                      </div>
+                      <ArrowRight strokeWidth={1} size={24} className="text-black group-hover:text-white opacity-0 group-hover:opacity-100 transition-all" />
+                    </Link>
+                  ))}
                 </div>
               )}
 
-              {/* CASE 3: NO RESULTS */}
+              {/* NO RESULTS */}
               {query.length > 0 && results.length === 0 && !isLoading && (
                 <div className="py-20 text-center border border-dashed border-black/10 animate-in zoom-in-95 duration-500">
                    <p className="font-ntypeMono text-[10px] uppercase text-black/40">! Error: No_Matching_Units_In_Database</p>

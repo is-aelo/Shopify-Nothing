@@ -22,7 +22,6 @@ export async function shopifyFetch({
         'X-Shopify-Storefront-Access-Token': storefrontAccessToken!,
       },
       body: JSON.stringify({ query, variables }),
-      // Set to 0 temporarily para pilitin ang refresh mula sa Shopify API
       next: { 
         revalidate: 0, 
         tags: tags 
@@ -46,6 +45,45 @@ export async function shopifyFetch({
       error: 'Error receiving data'
     };
   }
+}
+
+/**
+ * CHECKOUT CREATION
+ * Converts Zustand cart items into a Shopify Checkout URL
+ */
+export async function createCheckout(lineItems: { variantId: string; quantity: number }[]) {
+  const query = `
+    mutation checkoutCreate($input: CheckoutCreateInput!) {
+      checkoutCreate(input: $input) {
+        checkout {
+          id
+          webUrl
+        }
+        checkoutUserErrors {
+          code
+          field
+          message
+        }
+      }
+    }
+  `;
+
+  const variables = {
+    input: {
+      lineItems: lineItems.map(item => ({
+        variantId: item.variantId,
+        quantity: item.quantity
+      }))
+    }
+  };
+
+  const res = await shopifyFetch({
+    query,
+    variables,
+  });
+
+  // I-return ang checkout object (nandoon ang webUrl)
+  return res.body.data?.checkoutCreate?.checkout;
 }
 
 export async function getAllProducts() {
@@ -187,11 +225,6 @@ export async function getProductByHandle(handle: string) {
   });
 }
 
-/**
- * HYBRID RECOMMENDATIONS BY SHOPIFY
- * Pinilit nating i-fetch ang parehong RELATED at COMPLEMENTARY 
- * intents para makuha ang manual curation mo.
- */
 export async function getProductRecommendations(productId: string) {
   return shopifyFetch({
     query: `
