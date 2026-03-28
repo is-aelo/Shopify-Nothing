@@ -22,12 +22,12 @@
   --color-gray: var(--gray);
   --color-black: var(--black);
 
-/* Font Mappings */
-/* NDOT */
+  /* Font Mappings */
+  /* NDOT */
   --font-ndot: var(--font-ndot), ui-monospace, monospace;
   --font-ndotCaps: var(--font-ndot-caps), ui-monospace, monospace;
   
-/* NType */  
+  /* NType */  
   --font-ntype: var(--font-ntype), ui-sans-serif, system-ui;
   --font-ntypeHeadline: var(--font-ntype-headline), ui-sans-serif, system-ui;
   --font-ntypeMono: var(--font-ntype-mono), ui-monospace, monospace;
@@ -52,4 +52,34 @@ body {
   font-family: var(--font-ndot);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+/* 5. Custom Nothing-style Zoom Overlay (Custom Addition) */
+/* This targets the modal created by react-medium-image-zoom */
+
+[data-rmiz-modal-overlay="visible"] {
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
+  background-color: rgba(255, 255, 255, 0.75) !important;
+  transition: background-color 0.4s ease-out, backdrop-filter 0.4s ease-out !important;
+}
+
+/* Siguraduhin na transparent ang background ng image container para lumitaw ang blur */
+[data-rmiz-modal-content] {
+  background: transparent !important;
+}
+
+/* Custom smooth easing para mag-match sa Framer Motion transitions mo */
+[data-rmiz-content="found"] {
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+/* 6. Typography Overrides for Shopify Descriptions */
+.prose {
+  color: var(--foreground);
+}
+
+.prose b, .prose strong {
+  color: var(--black);
+  font-family: var(--font-ndot);
 }

@@ -128,9 +128,19 @@ export async function getProductByHandle(handle: string) {
           title
           handle
           descriptionHtml
-          variants(first: 1) {
+          options {
+            name
+            values
+          }
+          variants(first: 20) {
             edges {
               node {
+                id
+                title
+                selectedOptions {
+                  name
+                  value
+                }
                 price {
                   amount
                   currencyCode
@@ -139,10 +149,14 @@ export async function getProductByHandle(handle: string) {
                   amount
                   currencyCode
                 }
+                image {
+                  url
+                  altText
+                }
               }
             }
           }
-          images(first: 5) {
+          images(first: 10) {
             edges {
               node {
                 url
