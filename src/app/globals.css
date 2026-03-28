@@ -1,33 +1,53 @@
 @import "tailwindcss";
 
-/* 1. Global Color Variables - Black & White Only */
+/* 1. System Color Variables from Figma Design */
 :root {
-  --background: #000000;
-  --foreground: #ffffff;
+  --pure-white: #FFFFFF;
+  --white: #F5F5F5;
+  --grayish-white: #E1E2E3;
+  --gray: #373B3B;
+  --black: #07080F;
+
+  /* Functional Mappings - Switched for White Aesthetic */
+  --background: var(--pure-white);
+  --foreground: var(--black);
 }
 
-/* 2. Map Nothing Fonts to Tailwind Classes */
+/* 2. Tailwind Theme Configuration */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  
-  /* Usage: className="font-ndot" */
+  /* Brand Colors */
+  --color-pureWhite: var(--pure-white);
+  --color-white: var(--white);
+  --color-grayishWhite: var(--grayish-white);
+  --color-gray: var(--gray);
+  --color-black: var(--black);
+
+/* Font Mappings */
+/* NDOT */
   --font-ndot: var(--font-ndot), ui-monospace, monospace;
-  /* Usage: className="font-ntype" */
+  --font-ndotCaps: var(--font-ndot-caps), ui-monospace, monospace;
+  
+/* NType */  
   --font-ntype: var(--font-ntype), ui-sans-serif, system-ui;
+  --font-ntypeHeadline: var(--font-ntype-headline), ui-sans-serif, system-ui;
+  --font-ntypeMono: var(--font-ntype-mono), ui-monospace, monospace;
 }
 
-/* 3. Base Body Styling */
+/* 3. Global Base Styles */
 body {
   background: var(--background);
   color: var(--foreground);
-  /* Default body font set to Nothing Type */
   font-family: var(--font-ntype), sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Nothing Grid Background Effect */
+  background-image: radial-gradient(var(--gray) 0.5px, transparent 0.5px);
+  background-size: 60px 60px;
+  background-position: center;
 }
 
-/* 4. Global Dot Matrix Utility */
+/* 4. Typography Utilities */
 .dot-matrix {
   font-family: var(--font-ndot);
   text-transform: uppercase;

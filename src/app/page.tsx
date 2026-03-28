@@ -1,68 +1,82 @@
-import Image from 'next/image';
-import { getAllProducts } from '@/lib/shopify';
+"use client";
 
-export default async function Home() {
-  const response = await getAllProducts();
-  const products = response.body?.data?.products?.edges || [];
+import Header from '@/components/Header';
+import { motion } from 'framer-motion';
+import Link from 'next/link';
+import { ArrowRight } from "@phosphor-icons/react";
 
+export default function Home() {
   return (
-    <main className="p-10 font-ntype">
-      {/* Nothing Aesthetic Header */}
-      <div className="mb-20">
-        <h1 className="font-ndot text-6xl tracking-tighter uppercase leading-none">
-          Nothing <span className="text-brandRed">(R)</span>
-        </h1>
-        <p className="font-ntype opacity-40 text-xs tracking-[0.2em] mt-2 uppercase">
-          Inventory Status: System Connected
-        </p>
-      </div>
-      
-      {products.length > 0 ? (
-        <ul className="grid grid-cols-1 gap-1 border-t border-white/10">
-          {products.map((item: any) => {
-            const product = item.node;
-            const image = product.images.edges[0]?.node;
+    <div className="flex flex-col min-h-screen bg-black">
+      {/* 1. Integrated System Header */}
+      <Header />
 
-            return (
-              <li key={product.id} className="group grid grid-cols-1 md:grid-cols-[150px,1fr,auto] items-center gap-10 py-8 border-b border-white/10 hover:bg-white/[0.02] transition-colors px-4">
-                
-                {/* Image Section - High Contrast */}
-                <div className="relative aspect-square w-full bg-[#111] flex items-center justify-center overflow-hidden border border-white/5 grayscale group-hover:grayscale-0 transition-all duration-500">
-                  {image ? (
-                    <Image
-                      src={image.url}
-                      alt={image.altText || product.title}
-                      width={300}
-                      height={300}
-                      className="object-contain w-[80%] h-[80%]"
-                    />
-                  ) : (
-                    <div className="font-ndot text-[10px] text-white/20">NO_IMG</div>
-                  )}
-                </div>
+      {/* 2. Main Viewport: System_Entry */}
+      <main className="flex-grow flex flex-col items-center justify-center p-6 min-h-[120vh]">
+        
+        {/* Hero Section: Technical Manifest */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="text-center flex flex-col items-center"
+        >
+          <span className="font-ntypeMono text-[10px] tracking-[0.5em] text-white/20 uppercase mb-8">
+            System_Status: Operational // Build_2026.03
+          </span>
+          
+          <h1 className="font-ndot text-5xl md:text-8xl text-white uppercase leading-none tracking-tighter">
+            REWIRED<br />
+            <span className="text-white/10 italic">SYSTEMS</span>
+          </h1>
 
-                {/* Details Section */}
-                <div className="flex flex-col gap-1">
-                  <p className="font-ndot text-3xl uppercase tracking-tight">{product.title}</p>
-                  <p className="font-ntype text-sm opacity-50 max-w-md line-clamp-2">{product.description}</p>
-                </div>
+          <div className="mt-12 h-px w-32 bg-white/20" />
+          
+          <p className="mt-12 font-ntypeMono text-[10px] text-white/40 uppercase tracking-[0.2em] max-w-[300px] leading-relaxed">
+            High-performance hardware interface for the next generation of mobile computing.
+          </p>
 
-                {/* Technical Meta - Pure Nothing Vibes */}
-                <div className="text-right hidden md:block">
-                  <p className="font-ndot text-xs text-white/30 tracking-widest uppercase">ID: {product.handle}</p>
-                  <button className="mt-4 font-ndot border border-white px-6 py-2 text-xs hover:bg-white hover:text-black transition-all uppercase">
-                    View Specs
-                  </button>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      ) : (
-        <div className="font-ndot text-red-500 animate-pulse">
-          ERROR: CONNECTION_FAILED // CHECK_API_KEYS
+          {/* Core Navigation CTA */}
+          <Link href="/products" className="group mt-16 relative overflow-hidden">
+            <motion.div 
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="flex items-center gap-6 border border-white/10 px-8 py-4 bg-white/5 hover:bg-white hover:text-black transition-all duration-500"
+            >
+              <span className="font-ntypeMono text-xs uppercase tracking-widest">
+                Access_Inventory
+              </span>
+              <ArrowRight size={18} weight="thin" className="group-hover:translate-x-1 transition-transform" />
+            </motion.div>
+          </Link>
+        </motion.div>
+
+        {/* Scroll Indicator: Testing Backdrop Blur Contrast */}
+        <div className="mt-[40vh] w-full max-w-4xl opacity-10 flex flex-col items-center">
+           <div className="h-[200px] w-px bg-gradient-to-b from-white via-white/50 to-transparent" />
+           <p className="font-ntypeMono text-[9px] uppercase tracking-[0.4em] mt-8 text-white">
+             Continuity_Scroll
+           </p>
         </div>
-      )}
-    </main>
+      </main>
+
+      {/* 3. System Footer: Global Manifest */}
+      <footer className="p-10 border-t border-white/5 bg-black">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <p className="font-ndot text-[9px] text-white/20 uppercase tracking-[0.2em]">
+            Nothing (R) OS v1.0.0 // Headless_Instance_Verified
+          </p>
+          
+          <div className="flex gap-8">
+            <span className="font-ntypeMono text-[9px] text-white/10 uppercase tracking-widest hover:text-white transition-colors cursor-help">
+              Protocol_v4
+            </span>
+            <span className="font-ntypeMono text-[9px] text-white/10 uppercase tracking-widest hover:text-white transition-colors cursor-help">
+              Legal_Disclaimer
+            </span>
+          </div>
+        </div>
+      </footer>
+    </div>
   );
 }
