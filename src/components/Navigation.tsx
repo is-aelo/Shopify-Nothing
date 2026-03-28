@@ -3,34 +3,33 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-// Inimport lahat ng kailangang icons mula sa Phosphor
 import { 
   X, 
-  House, 
-  Storefront, 
-  DeviceMobile, 
+  Home as HouseIcon, 
+  ShoppingBag, 
+  Smartphone, 
   Headphones, 
   Watch, 
   Briefcase, 
-  Sparkle,
+  Zap,
   User,
-  Lifebuoy,
+  LifeBuoy,
   FileText
-} from "@phosphor-icons/react";
+} from "lucide-react";
 
 const NAV_LINKS = [
-  { name: 'Home',        href: '/',            icon: House },
-  { name: 'Shop All',    href: '/products',    icon: Storefront },
-  { name: 'Phones',      href: '/phones',      icon: DeviceMobile },
-  { name: 'Audio',       href: '/audio',       icon: Headphones },
-  { name: 'Watches',     href: '/watches',     icon: Watch },
-  { name: 'Accessories', href: '/accessories', icon: Briefcase },
-  { name: 'CMF',         href: '/cmf',         icon: Sparkle },
+  { name: 'Home',         href: '/',            icon: HouseIcon },
+  { name: 'Shop All',     href: '/products',    icon: ShoppingBag },
+  { name: 'Phones',       href: '/phones',      icon: Smartphone },
+  { name: 'Audio',        href: '/audio',       icon: Headphones },
+  { name: 'Watches',      href: '/watches',     icon: Watch },
+  { name: 'Accessories',  href: '/accessories', icon: Briefcase },
+  { name: 'CMF',          href: '/cmf',         icon: Zap },
 ];
 
 const FOOTER_LINKS = [
   { name: 'Account', href: '/account', icon: User },
-  { name: 'Support', href: '/support', icon: Lifebuoy },
+  { name: 'Support', href: '/support', icon: LifeBuoy },
   { name: 'Legal',   href: '/legal',   icon: FileText },
 ];
 
@@ -87,9 +86,9 @@ export default function Navigation({ isOpen, onClose }: NavigationProps) {
               <button
                 onClick={onClose}
                 aria-label="Close menu"
-                className="p-2 hover:opacity-40 transition-opacity active:scale-95"
+                className="p-2 hover:opacity-40 transition-opacity active:scale-95 text-black"
               >
-                <X size={24} weight="light" className="text-black" />
+                <X size={24} strokeWidth={1} />
               </button>
             </div>
 
@@ -112,10 +111,9 @@ export default function Navigation({ isOpen, onClose }: NavigationProps) {
                       onClick={onClose}
                       className="group relative flex items-center py-2 gap-4"
                     >
-                      {/* Phosphor Icon added here */}
                       <Icon 
                         size={32} 
-                        weight="light" 
+                        strokeWidth={1} 
                         className={`transition-colors duration-500 ${isActive ? 'text-[#ff0000]' : 'text-black/10 group-hover:text-black'}`} 
                       />
                       
@@ -153,14 +151,14 @@ export default function Navigation({ isOpen, onClose }: NavigationProps) {
                       onClick={onClose}
                       className="group flex items-center gap-2 font-ntypeMono text-[10px] uppercase tracking-widest text-black/40 hover:text-black transition-colors"
                     >
-                      <FooterIcon size={14} weight="light" />
+                      <FooterIcon size={14} strokeWidth={1.5} />
                       {item.name}
                     </Link>
                   );
                 })}
               </div>
               <p className="font-ntypeMono text-[10px] text-black/20 uppercase tracking-[0.3em]">
-                © Nothing Technology Limited
+                © REWIRED SYSTEMS // Nothing Technology Limited
               </p>
             </div>
           </motion.div>

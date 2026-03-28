@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from 'framer-motion';
-import { Plus, Minus, CreditCard } from "@phosphor-icons/react";
+import { Plus, Minus, CreditCard } from "lucide-react";
 
 interface ProductActionMenuProps {
   quantity: number;
@@ -43,8 +43,9 @@ export default function ProductActionMenu({
           <button 
             onClick={() => setQuantity(Math.max(1, quantity - 1))} 
             className="hover:opacity-40 transition-opacity text-[#07080F]"
+            aria-label="Decrease quantity"
           >
-            <Minus size={14}/>
+            <Minus size={14} strokeWidth={1.5} />
           </button>
           <span className="font-ndot text-xs w-4 text-center tabular-nums text-[#07080F]">
             {quantity}
@@ -52,8 +53,9 @@ export default function ProductActionMenu({
           <button 
             onClick={() => setQuantity(quantity + 1)} 
             className="hover:opacity-40 transition-opacity text-[#07080F]"
+            aria-label="Increase quantity"
           >
-            <Plus size={14}/>
+            <Plus size={14} strokeWidth={1.5} />
           </button>
         </div>
         
@@ -69,7 +71,7 @@ export default function ProductActionMenu({
           className="flex-[1.5] md:flex-[2] bg-[#07080F] text-white h-10 md:h-12 rounded-full font-ndot uppercase tracking-[0.1em] text-[9px] md:text-[10px] flex flex-col items-center justify-center leading-none px-6 md:px-10 shadow-xl active:scale-[0.98] transition-all overflow-hidden disabled:opacity-50"
         >
           <div className="flex items-center gap-2">
-            <CreditCard size={16} />
+            <CreditCard size={16} strokeWidth={1.5} />
             <span>Buy Now</span>
           </div>
           

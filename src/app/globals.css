@@ -42,8 +42,8 @@ body {
   -moz-osx-font-smoothing: grayscale;
 
   /* Nothing Grid Background Effect */
-  background-image: radial-gradient(var(--gray) 0.5px, transparent 0.5px);
-  background-size: 60px 60px;
+  background-image: radial-gradient(var(--grayish-white) 0.8px, transparent 0.8px);
+  background-size: 40px 40px;
   background-position: center;
 }
 
@@ -54,14 +54,13 @@ body {
   letter-spacing: 0.05em;
 }
 
-/* 5. Custom Nothing-style Zoom Overlay (Custom Addition) */
-/* This targets the modal created by react-medium-image-zoom */
-
+/* 5. Custom Nothing-style Zoom Overlay */
+/* Targets the modal created by react-medium-image-zoom */
 [data-rmiz-modal-overlay="visible"] {
-  backdrop-filter: blur(15px) !important;
-  -webkit-backdrop-filter: blur(15px) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
   background-color: rgba(255, 255, 255, 0.75) !important;
-  transition: background-color 0.4s ease-out, backdrop-filter 0.4s ease-out !important;
+  transition: background-color 0.5s cubic-bezier(0.16, 1, 0.3, 1), backdrop-filter 0.5s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 /* Siguraduhin na transparent ang background ng image container para lumitaw ang blur */
@@ -71,7 +70,7 @@ body {
 
 /* Custom smooth easing para mag-match sa Framer Motion transitions mo */
 [data-rmiz-content="found"] {
-  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1) !important;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 /* 6. Typography Overrides for Shopify Descriptions */
@@ -82,4 +81,28 @@ body {
 .prose b, .prose strong {
   color: var(--black);
   font-family: var(--font-ndot);
+  font-weight: normal;
+}
+
+/* 7. Functional Glassmorphism Utilities */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(225, 226, 227, 0.5);
+}
+
+.glass-border {
+  border-color: rgba(225, 226, 227, 0.5);
+}
+
+/* 8. Scrollbar Reset for Minimalist Look */
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }

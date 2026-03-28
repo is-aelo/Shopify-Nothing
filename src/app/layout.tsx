@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import CartDrawer from "@/components/CartDrawer";
 
 // 1. NDot Matrix Fonts
 const ndot = localFont({
@@ -51,7 +52,11 @@ export default function RootLayout({
           min-h-full flex flex-col bg-pureWhite text-black
         `}
       >
+        {/* Main Content */}
         {children}
+
+        {/* Global Cart Drawer Overlay */}
+        <CartDrawer />
       </body>
     </html>
   );

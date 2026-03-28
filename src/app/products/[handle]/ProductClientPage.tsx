@@ -15,17 +15,23 @@ export default function ProductClientPage({ product }: { product: any }) {
 
   useEffect(() => {
     if (product) {
+      // Set initial variant
       setSelectedVariant(product?.variants?.edges?.[0]?.node || null);
+      
+      // Subtle delay para hindi flashy ang transition mula skeleton
       const timer = setTimeout(() => setLoading(false), 500); 
       return () => clearTimeout(timer);
     }
   }, [product]);
 
   // --- SAFE DERIVED STATES ---
-  // Gagamit tayo ng Optional Chaining (?.) para hindi mag-crash habang null pa ang variant
   const price = selectedVariant?.price;
   const compareAtPrice = selectedVariant?.compareAtPrice;
-  const isOnSale = compareAtPrice && price ? Number(compareAtPrice.amount) > Number(price.amount) : false;
+  
+  const isOnSale = compareAtPrice && price 
+    ? Number(compareAtPrice.amount) > Number(price.amount) 
+    : false;
+    
   const savingsAmount = isOnSale && price && compareAtPrice 
     ? (Number(compareAtPrice.amount) - Number(price.amount)) * quantity 
     : 0;
@@ -49,7 +55,7 @@ export default function ProductClientPage({ product }: { product: any }) {
     );
   }
 
-  // 2. ACTUAL CONTENT (Siguradong may data na rito)
+  // 2. ACTUAL CONTENT
   return (
     <>
       <Header />
@@ -60,6 +66,7 @@ export default function ProductClientPage({ product }: { product: any }) {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-[80px_1fr_400px] xl:grid-cols-[100px_1fr_450px] gap-6 md:gap-8 xl:gap-20 items-start">
+            
             <ProductGallery 
               product={product} 
               selectedVariant={selectedVariant} 
@@ -70,10 +77,11 @@ export default function ProductClientPage({ product }: { product: any }) {
               selectedVariant={selectedVariant}
               setSelectedVariant={setSelectedVariant}
             />
+
           </div>
         </div>
 
-        {/* Action Menu - only render if variant exists */}
+        {/* Action Menu - standard sticky footer behavior */}
         {selectedVariant && (
           <ProductActionMenu 
             quantity={quantity}

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MagnifyingGlass, X, ArrowRight, ClockCounterClockwise } from "@phosphor-icons/react";
+import { Search as SearchIcon, X, ArrowRight, History } from "lucide-react";
 import Link from 'next/link';
 import { getSearchResults } from '@/lib/shopify';
 
@@ -14,24 +14,27 @@ interface SearchProps {
 export default function Search({ isOpen, onClose }: SearchProps) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<any[]>([]);
-  const [recentItems, setRecentItems] = useState<any[]>([]); // State for localStorage history
+  const [recentItems, setRecentItems] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Load history from localStorage every time the search overlay opens
+  // 1. Lifecycle: Sync Focus & History
   useEffect(() => {
+    let focusTimer: NodeJS.Timeout;
+
     if (isOpen) {
       const history = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
       setRecentItems(history);
       
       // Technical auto-focus delay for smooth transition
-      setTimeout(() => inputRef.current?.focus(), 100);
+      focusTimer = setTimeout(() => inputRef.current?.focus(), 150);
     }
+
+    return () => clearTimeout(focusTimer);
   }, [isOpen]);
 
-  // Main Search Logic with Debouncing
+  // 2. Search Logic with Debounce
   useEffect(() => {
-    // If query is empty, clear results (UI will fallback to Recently Viewed)
     if (query.trim() === "") {
       setResults([]);
       return;
@@ -50,9 +53,18 @@ export default function Search({ isOpen, onClose }: SearchProps) {
       }
     };
 
-    const timeoutId = setTimeout(fetchProducts, 300);
+    const timeoutId = setTimeout(fetchProducts, 400); // Optimized for API rate limits
     return () => clearTimeout(timeoutId);
   }, [query]);
+
+  // 3. Accessibility: Close on ESC
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
 
   return (
     <AnimatePresence>
@@ -63,10 +75,14 @@ export default function Search({ isOpen, onClose }: SearchProps) {
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-[110] flex flex-col bg-white/95 backdrop-blur-[50px]"
         >
-          {/* Technical Header */}
+          {/* Header */}
           <div className="flex items-center justify-between px-6 py-[18px]">
-            <button onClick={onClose} className="p-2 -ml-2 hover:opacity-50 transition-opacity text-black">
-              <X size={22} weight="thin" />
+            <button 
+              onClick={onClose} 
+              className="p-2 -ml-2 hover:opacity-50 transition-opacity text-black"
+              aria-label="Close search"
+            >
+              <X strokeWidth={1} size={22} />
             </button>
             <span className="font-ntypeMono text-[10px] uppercase tracking-[0.3em] text-black/40">
               Terminal_Session: Global_Search
@@ -75,7 +91,7 @@ export default function Search({ isOpen, onClose }: SearchProps) {
           </div>
 
           <div className="mx-auto w-full max-w-4xl px-6 pt-20">
-            {/* Command Line Input */}
+            {/* Input Section */}
             <div className="group relative border-b border-black/10 pb-4 focus-within:border-black transition-colors">
               <input
                 ref={inputRef}
@@ -85,26 +101,28 @@ export default function Search({ isOpen, onClose }: SearchProps) {
                 placeholder="SEARCH_SYSTEM"
                 className="w-full bg-transparent font-ntypeMono text-4xl md:text-6xl uppercase tracking-tighter outline-none placeholder:text-black/5 text-black"
               />
-              <MagnifyingGlass 
-                size={32} 
-                weight="thin" 
-                className={`absolute right-0 top-1/2 -translate-y-1/2 text-black ${isLoading ? 'animate-pulse' : ''}`} 
-              />
+              <div className="absolute right-0 top-1/2 -translate-y-1/2">
+                {isLoading ? (
+                  <div className="h-6 w-6 border-t-2 border-black rounded-full animate-spin" />
+                ) : (
+                  <SearchIcon strokeWidth={1} size={32} className="text-black" />
+                )}
+              </div>
             </div>
 
             <div className="mt-12 overflow-y-auto max-h-[60vh] pr-4 custom-scrollbar pb-20">
               
-              {/* CASE 1: RECENTLY VIEWED (Displays when input is empty) */}
+              {/* CASE 1: RECENTLY VIEWED */}
               {query.length === 0 && recentItems.length > 0 && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
                   <div className="flex items-center gap-2 mb-6 opacity-40">
-                    <ClockCounterClockwise size={14} />
-                    <p className="font-ntypeMono text-[10px] uppercase tracking-widest">Recently_Viewed_Logs</p>
+                    <History size={14} strokeWidth={1.5} />
+                    <p className="font-ntypeMono text-[10px] uppercase tracking-widest text-black">Recently_Viewed_Logs</p>
                   </div>
                   <div className="grid grid-cols-1 gap-2">
                     {recentItems.map((product) => (
                       <Link 
-                        key={product.id} 
+                        key={product.handle} 
                         href={`/products/${product.handle}`} 
                         onClick={onClose}
                         className="group flex items-center justify-between border border-black/5 p-4 hover:bg-black transition-all"
@@ -117,45 +135,45 @@ export default function Search({ isOpen, onClose }: SearchProps) {
                           </div>
                           <h3 className="font-ndot text-lg uppercase text-black group-hover:text-white transition-colors">{product.title}</h3>
                         </div>
-                        <ArrowRight size={20} weight="thin" className="text-black group-hover:text-white opacity-0 group-hover:opacity-100 transition-all" />
+                        <ArrowRight strokeWidth={1} size={20} className="text-black group-hover:text-white opacity-0 group-hover:opacity-100 transition-all" />
                       </Link>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* CASE 2: SEARCH RESULTS (Displays when typing) */}
+              {/* CASE 2: SEARCH RESULTS */}
               {results.length > 0 && (
                 <div className="grid grid-cols-1 gap-2 animate-in fade-in duration-300">
-                  <p className="font-ntypeMono text-[10px] uppercase tracking-widest text-brandRed mb-4">
+                  <p className="font-ntypeMono text-[10px] uppercase tracking-widest text-black/50 mb-4">
                     Matches_Found: {results.length.toString().padStart(2, '0')}
                   </p>
                   {results.map((product: any) => {
                     const image = product.images?.edges?.[0]?.node;
                     return (
                       <Link 
-                        key={product.id}
+                        key={product.handle}
                         href={`/products/${product.handle}`}
                         onClick={onClose}
                         className="group flex items-center justify-between border border-black/5 p-6 hover:bg-black transition-all"
                       >
                         <div className="flex items-center gap-6">
-                          <div className="h-16 w-16 bg-black/5 flex items-center justify-center grayscale group-hover:grayscale-0 group-hover:bg-white/10 transition-all">
-                            {image && <img src={image.url} alt="" className="h-[80%] w-[80%] object-contain mix-blend-multiply group-hover:invert transition-all" />}
+                          <div className="h-16 w-16 bg-black/5 flex items-center justify-center grayscale group-hover:invert transition-all">
+                            {image && <img src={image.url} alt="" className="h-[80%] w-[80%] object-contain" />}
                           </div>
                           <div>
                             <h3 className="font-ndot text-xl uppercase group-hover:text-white text-black transition-colors">{product.title}</h3>
                             <p className="font-ntypeMono text-[10px] text-black/40 group-hover:text-white/40 uppercase">UID: {product.handle}</p>
                           </div>
                         </div>
-                        <ArrowRight size={24} weight="thin" className="text-black group-hover:text-white opacity-0 group-hover:opacity-100 transition-all" />
+                        <ArrowRight strokeWidth={1} size={24} className="text-black group-hover:text-white opacity-0 group-hover:opacity-100 transition-all" />
                       </Link>
                     );
                   })}
                 </div>
               )}
 
-              {/* CASE 3: NO RESULTS FOUND */}
+              {/* CASE 3: NO RESULTS */}
               {query.length > 0 && results.length === 0 && !isLoading && (
                 <div className="py-20 text-center border border-dashed border-black/10 animate-in zoom-in-95 duration-500">
                    <p className="font-ntypeMono text-[10px] uppercase text-black/40">! Error: No_Matching_Units_In_Database</p>

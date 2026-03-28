@@ -3,7 +3,7 @@
 import Header from '@/components/Header';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { ArrowRight } from "@phosphor-icons/react";
+import { ArrowRight } from "lucide-react";
 
 export default function Home() {
   return (
@@ -46,7 +46,11 @@ export default function Home() {
               <span className="font-ntypeMono text-xs uppercase tracking-widest">
                 Access_Inventory
               </span>
-              <ArrowRight size={18} weight="thin" className="group-hover:translate-x-1 transition-transform" />
+              <ArrowRight 
+                size={18} 
+                strokeWidth={1} 
+                className="group-hover:translate-x-1 transition-transform" 
+              />
             </motion.div>
           </Link>
         </motion.div>

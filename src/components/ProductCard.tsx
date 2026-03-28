@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowUpRight } from "@phosphor-icons/react";
+import { ArrowUpRight, ShoppingBag, Check } from "lucide-react";
 import { useState } from 'react';
 
 // ── Palette Mapping ────────────────────────────────────────────────────────
@@ -35,7 +35,7 @@ function AddToBasketButton() {
       onHoverEnd={() => !added && setHovered(false)}
       onClick={handleClick}
       animate={{
-        width: isExpanded ? (window.innerWidth < 768 ? 100 : 120) : (window.innerWidth < 768 ? 40 : 38),
+        width: isExpanded ? (typeof window !== 'undefined' && window.innerWidth < 768 ? 100 : 120) : (typeof window !== 'undefined' && window.innerWidth < 768 ? 40 : 38),
         backgroundColor: added ? '#07080F' : isExpanded ? '#07080F' : '#FFFFFF',
         borderColor: added ? '#07080F' : isExpanded ? '#07080F' : '#E1E2E3',
       }}
@@ -55,11 +55,7 @@ function AddToBasketButton() {
               exit={{ opacity: 0, scale: 0.8 }}
               className="flex items-center justify-center"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="md:w-4 md:h-4">
-                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4Z" />
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <path d="M16 10a4 4 0 01-8 0" />
-              </svg>
+              <ShoppingBag size={18} strokeWidth={1.5} className="md:w-4 md:h-4" />
             </motion.span>
           ) : (
             <motion.span 
@@ -69,9 +65,7 @@ function AddToBasketButton() {
               exit={{ opacity: 0, scale: 0.5 }}
               className="flex items-center justify-center"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="md:w-3.5 md:h-3.5">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
+              <Check size={16} strokeWidth={2.5} className="md:w-3.5 md:h-3.5" />
             </motion.span>
           )}
         </AnimatePresence>
@@ -111,7 +105,7 @@ export default function ProductCard({ product }: { product: any }) {
   };
 
   return (
-    <div className="group/card bg-[#FFFFFF] p-4 md:p-10 flex flex-col transition-all duration-500 relative overflow-hidden border-[#E1E2E3]">
+    <div className="group/card bg-[#FFFFFF] p-4 md:p-10 flex flex-col transition-all duration-500 relative overflow-hidden border border-[#E1E2E3]">
       <Link href={`/products/${product.handle}`} className="absolute inset-0 z-0" />
       
       {isOnSale && (
@@ -146,7 +140,7 @@ export default function ProductCard({ product }: { product: any }) {
           
           <div className="pointer-events-auto p-2 md:p-2.5 border border-[#E1E2E3] rounded-full bg-[#FFFFFF] hover:bg-[#07080F] hover:text-[#FFFFFF] transition-all duration-500 transform group-hover/card:scale-105 text-[#07080F]">
             <Link href={`/products/${product.handle}`}>
-              <ArrowUpRight size={14} className="md:w-5 md:h-5" weight="light" />
+              <ArrowUpRight size={14} strokeWidth={1.5} className="md:w-5 md:h-5" />
             </Link>
           </div>
         </div>

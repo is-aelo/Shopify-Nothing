@@ -17,7 +17,7 @@ export default function ProductGallery({ product, selectedVariant }: ProductGall
       .filter(Boolean);
   }, [product]);
 
-  const filteredImages = useMemo(() => {
+  const filteredImages: string[] = useMemo(() => {
     const allImages = product.images?.edges?.map((edge: any) => edge.node.url) || [];
     const selectedVariantUrl = selectedVariant?.image?.url;
 
@@ -28,19 +28,17 @@ export default function ProductGallery({ product, selectedVariant }: ProductGall
     });
   }, [product, selectedVariant, allVariantImageUrls]);
 
-  const [currentMainImage, setCurrentMainImage] = useState(filteredImages[0]);
+  const [currentMainImage, setCurrentMainImage] = useState<string>(filteredImages[0]);
   const [mobileActiveIndex, setMobileActiveIndex] = useState(0);
   const [zoomKey, setZoomKey] = useState(0); 
   
   const mobileGalleryRef = useRef<HTMLDivElement>(null);
   const isInternalScrolling = useRef(false);
 
-  // --- SMOOTH AUTO-CLOSE ON RESIZE ---
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
 
     const handleResize = () => {
-      // Re-trigger zoomKey to unmount zoom portal
       setZoomKey(prev => prev + 1);
 
       if (mobileGalleryRef.current) {
@@ -51,7 +49,7 @@ export default function ProductGallery({ product, selectedVariant }: ProductGall
 
     const debouncedResize = () => {
       clearTimeout(timeoutId);
-      timeoutId = setTimeout(handleResize, 50); // Faster response for smoothness
+      timeoutId = setTimeout(handleResize, 50);
     };
 
     window.addEventListener('resize', debouncedResize);
@@ -97,7 +95,7 @@ export default function ProductGallery({ product, selectedVariant }: ProductGall
     <>
       {/* DESKTOP THUMBNAILS */}
       <div className="hidden lg:flex lg:flex-col lg:gap-3 lg:sticky lg:top-32">
-        {filteredImages.map((imgUrl, index) => (
+        {filteredImages.map((imgUrl: string, index: number) => (
           <button
             key={imgUrl}
             onClick={() => scrollToImage(index)}
@@ -119,7 +117,7 @@ export default function ProductGallery({ product, selectedVariant }: ProductGall
             onScroll={handleMobileScroll}
             className="flex overflow-x-auto snap-x snap-mandatory lg:hidden h-full no-scrollbar scroll-smooth"
           >
-            {filteredImages.map((imgUrl) => (
+            {filteredImages.map((imgUrl: string) => (
               <div key={`mobile-${imgUrl}`} className="flex-shrink-0 w-full h-full snap-center flex items-center justify-center p-6 md:p-10">
                 <AnimatePresence mode="wait">
                   <motion.div
@@ -130,7 +128,7 @@ export default function ProductGallery({ product, selectedVariant }: ProductGall
                     transition={{ duration: 0.3, ease: "easeOut" }}
                     className="w-full h-full flex items-center justify-center"
                   >
-                    <Zoom overlayBgColorEnd="rgba(255, 255, 255, 0.95)">
+                    <Zoom>
                       <img 
                         src={imgUrl} 
                         className="max-w-[85%] max-h-[85%] w-auto h-auto object-contain mix-blend-multiply cursor-zoom-in" 
@@ -154,7 +152,7 @@ export default function ProductGallery({ product, selectedVariant }: ProductGall
                 transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                 className="w-full h-full flex items-center justify-center"
               >
-                <Zoom overlayBgColorEnd="rgba(255, 255, 255, 0.95)">
+                <Zoom>
                   <img 
                     src={currentMainImage} 
                     className="w-full h-full object-contain mix-blend-multiply cursor-zoom-in" 
@@ -167,7 +165,7 @@ export default function ProductGallery({ product, selectedVariant }: ProductGall
 
           {/* MOBILE PAGINATION */}
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-[#E1E2E3]/40 backdrop-blur-md border border-white/20 rounded-full flex justify-center gap-1.5 lg:hidden pointer-events-none">
-            {filteredImages.map((_, i) => (
+            {filteredImages.map((_: string, i: number) => (
               <motion.div 
                 key={i} 
                 animate={{ width: i === mobileActiveIndex ? 16 : 4 }}

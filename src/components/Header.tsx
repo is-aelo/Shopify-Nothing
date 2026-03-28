@@ -2,17 +2,24 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, MagnifyingGlass, ShoppingBag } from "@phosphor-icons/react";
+import { User, Search as SearchIcon, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 import BrandLogo from './BrandLogo';
 import Navigation from './Navigation';
 import Search from './Search';
+import { useCartStore } from '@/store/useCartStore';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [cartCount] = useState(0); 
   const [scrolled, setScrolled] = useState(false);
+
+  // Zustand states
+  const openCart = useCartStore((state) => state.openCart);
+  const cartItems = useCartStore((state) => state.cartItems);
+  
+  // Calculate total items in basket
+  const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -38,7 +45,7 @@ export default function Header() {
       >
         <div className="mx-auto grid max-w-7xl grid-cols-3 items-center px-4 sm:px-6 lg:px-8">
           
-          {/* ── LEFT: Navigation & Discovery (Menu + Search) ──────────────── */}
+          {/* ── LEFT: Navigation & Discovery ──────────────── */}
           <div className="flex items-center justify-start gap-1">
             <button
               onClick={() => setIsMenuOpen(true)}
@@ -49,9 +56,8 @@ export default function Header() {
               <span className="h-[1.2px] w-3 bg-black transition-all group-hover:w-5" />
             </button>
 
-            {/* Search moved here for balance */}
             <IconButton label="Search" onClick={() => setIsSearchOpen(true)}>
-              <MagnifyingGlass size={20} weight="thin" />
+              <SearchIcon size={20} strokeWidth={1.2} />
             </IconButton>
           </div>
 
@@ -62,27 +68,27 @@ export default function Header() {
             </div>
           </div>
 
-          {/* ── RIGHT: User_Portal (Account + Cart) ──────────────── */}
+          {/* ── RIGHT: User_Portal ──────────────── */}
           <div className="flex justify-end items-center gap-1">
             <Link href="/account" className={iconButtonBase} aria-label="Account">
-              <User size={20} weight="thin" />
+              <User size={20} strokeWidth={1.2} />
             </Link>
 
             <div className="relative">
-              <IconButton label="Cart">
-                <ShoppingBag size={20} weight="thin" />
+              <IconButton label="Cart" onClick={openCart}>
+                <ShoppingBag size={20} strokeWidth={1.2} />
               </IconButton>
               
               {/* Nothing-style badge logic */}
               <AnimatePresence>
                 {cartCount > 0 && (
                   <motion.span 
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    exit={{ scale: 0 }}
-                    className="absolute right-1 top-1 flex h-3.5 min-w-[0.875rem] items-center justify-center rounded-full bg-black px-1 font-ntypeMono text-[7px] text-white"
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0, opacity: 0 }}
+                    className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-black px-1 font-ntypeMono text-[8px] text-white pointer-events-none border border-white"
                   >
-                    {cartCount > 9 ? '9+' : cartCount}
+                    {cartCount > 99 ? '99+' : cartCount}
                   </motion.span>
                 )}
               </AnimatePresence>

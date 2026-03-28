@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from 'framer-motion';
-import { CaretLeft, CaretRight } from "@phosphor-icons/react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface PaginationProps {
   currentPage: number;
@@ -26,7 +26,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
           disabled={currentPage === 1}
           className="group flex items-center gap-2 disabled:opacity-10 disabled:cursor-not-allowed transition-all"
         >
-          <CaretLeft size={16} weight="bold" />
+          <ChevronLeft size={16} strokeWidth={2} />
           <span className="font-ndot text-[11px] uppercase tracking-widest pt-0.5 border-b border-transparent group-hover:border-black transition-all">
             Prev
           </span>
@@ -53,7 +53,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
           <span className="font-ndot text-[11px] uppercase tracking-widest pt-0.5 border-b border-transparent group-hover:border-black transition-all">
             Next
           </span>
-          <CaretRight size={16} weight="bold" />
+          <ChevronRight size={16} strokeWidth={2} />
         </button>
       </div>
     </div>
