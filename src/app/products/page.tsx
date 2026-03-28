@@ -47,7 +47,6 @@ function AddToBasketButton() {
         animate={{ color: isExpanded ? '#fff' : '#000' }}
         transition={{ duration: 0.15 }}
       >
-        {/* Swapping Icon */}
         <AnimatePresence mode="wait" initial={false}>
           {!added ? (
             <motion.span
@@ -79,7 +78,6 @@ function AddToBasketButton() {
           )}
         </AnimatePresence>
 
-        {/* Label using font-ndot */}
         <AnimatePresence initial={false}>
           {isExpanded && (
             <motion.span
@@ -117,12 +115,19 @@ function ArrowButton({ href }: { href: string }) {
 // ── Main Page ────────────────────────────────────────────────────────────────
 export default function ProductsPage() {
   const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadProducts() {
-      const response = await getAllProducts();
-      const fetchedProducts = response?.body?.data?.products?.edges?.map((edge: any) => edge.node) || [];
-      setProducts(fetchedProducts);
+      try {
+        const response = await getAllProducts();
+        const fetchedProducts = response?.body?.data?.products?.edges?.map((edge: any) => edge.node) || [];
+        setProducts(fetchedProducts);
+      } catch (error) {
+        console.error("Error loading products:", error);
+      } finally {
+        setLoading(false);
+      }
     }
     loadProducts();
   }, []);
@@ -131,7 +136,7 @@ export default function ProductsPage() {
     return new Intl.NumberFormat('en-PH', {
       style: 'currency',
       currency: currencyCode || 'PHP',
-      currencyDisplay: 'symbol',
+      maximumFractionDigits: 0,
     }).format(Number(amount));
   };
 
@@ -142,7 +147,7 @@ export default function ProductsPage() {
       <main className="min-h-screen bg-white pt-16 pb-20 px-6">
         <div className="max-w-7xl mx-auto">
 
-          {/* Header */}
+          {/* Catalog Header */}
           <div className="border-b border-black/[0.08] pb-12 mb-12 flex justify-between items-end">
             <div>
               <p className="font-ntypeMono text-[10px] uppercase tracking-[0.2em] text-black/40 mb-2">
@@ -161,83 +166,95 @@ export default function ProductsPage() {
           </div>
 
           {/* Product Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-black/[0.08] border border-black/[0.08]">
-            {products.map((product: any) => {
-              const variant = product.variants?.edges?.[0]?.node;
-              const price = variant?.price;
-              const compareAtPrice = variant?.compareAtPrice;
-              const image = product.images?.edges?.[0]?.node;
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-black/[0.08] border border-black/[0.08]">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="bg-white p-10 h-[500px] animate-pulse" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-black/[0.08] border border-black/[0.08]">
+              {products.map((product: any) => {
+                const variant = product.variants?.edges?.[0]?.node;
+                const price = variant?.price;
+                const compareAtPrice = variant?.compareAtPrice;
+                const image = product.images?.edges?.[0]?.node;
 
-              const isOnSale = compareAtPrice && Number(compareAtPrice.amount) > Number(price?.amount);
+                const isOnSale = compareAtPrice && Number(compareAtPrice.amount) > Number(price?.amount);
 
-              const discountPercent = isOnSale 
-                ? Math.round(((Number(compareAtPrice.amount) - Number(price.amount)) / Number(compareAtPrice.amount)) * 100)
-                : 0;
+                const discountPercent = isOnSale 
+                  ? Math.round(((Number(compareAtPrice.amount) - Number(price.amount)) / Number(compareAtPrice.amount)) * 100)
+                  : 0;
 
-              return (
-                <div
-                  key={product.id}
-                  className="group/card bg-white p-10 flex flex-col transition-all duration-500 relative overflow-hidden hover:z-10"
-                >
-                  {/* Entire Card Link (except buttons) */}
-                  <Link href={`/products/${product.handle}`} className="absolute inset-0 z-0" />
+                return (
+                  <div
+                    key={product.id}
+                    className="group/card bg-white p-10 flex flex-col transition-all duration-500 relative overflow-hidden hover:z-10"
+                  >
+                    {/* Entire Card Link (except buttons) */}
+                    <Link href={`/products/${product.handle}`} className="absolute inset-0 z-0" />
 
-                  {/* Sale badge */}
-                  {isOnSale && (
-                    <div className="absolute top-6 left-6 z-10">
-                      <span className="bg-[#ff0000] text-white font-ndot text-[11px] px-3 py-2 uppercase tracking-widest leading-none rounded-sm shadow-sm">
-                        {discountPercent}% OFF
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Image Container */}
-                  <div className="aspect-square w-full mb-14 flex items-center justify-center overflow-hidden pointer-events-none">
-                    <motion.div
-                      whileHover={{ scale: 1.05 }}
-                      transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                      className="w-full h-full flex items-center justify-center"
-                    >
-                      {image ? (
-                        <img
-                          src={image.url}
-                          alt={product.title}
-                          className="w-[85%] h-[85%] object-contain mix-blend-multiply"
-                        />
-                      ) : (
-                        <div className="font-ntypeMono text-[10px] opacity-10 italic uppercase">NO_ASSET_FOUND</div>
-                      )}
-                    </motion.div>
-                  </div>
-
-                  {/* Product Info */}
-                  <div className="mt-auto relative z-10 pointer-events-none">
-                    <div className="flex justify-between items-end mb-6">
-                      <h2 className="font-ndot text-2xl uppercase text-black leading-[1.1] max-w-[75%]">
-                        {product.title}
-                      </h2>
-                      <ArrowButton href={`/products/${product.handle}`} />
-                    </div>
-
-                    <div className="flex justify-between items-center pt-5 border-t border-black/[0.05]">
-                      <div className="flex flex-col">
-                        {isOnSale && (
-                          <span className="font-ndot text-[12px] text-black/30 line-through tracking-tighter mb-0.5">
-                            {formatCurrency(compareAtPrice.amount, compareAtPrice.currencyCode)}
-                          </span>
-                        )}
-                        <span className="font-ndot text-xl text-black tracking-tight leading-none">
-                          {price ? formatCurrency(price.amount, price.currencyCode) : 'TBD'}
+                    {/* Sale badge */}
+                    {isOnSale && (
+                      <div className="absolute top-6 left-6 z-10">
+                        <span className="bg-[#ff0000] text-white font-ndot text-[11px] px-3 py-2 uppercase tracking-widest leading-none rounded-sm shadow-sm">
+                          {discountPercent}% OFF
                         </span>
                       </div>
+                    )}
 
-                      <AddToBasketButton />
+                    {/* Image Container */}
+                    <div className="aspect-square w-full mb-14 flex items-center justify-center overflow-hidden pointer-events-none">
+                      <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                        className="w-full h-full flex items-center justify-center"
+                      >
+                        {image?.url ? (
+                          <img
+                            src={image.url}
+                            alt={image.altText || product.title}
+                            className="w-[85%] h-[85%] object-contain mix-blend-multiply"
+                          />
+                        ) : (
+                          <div className="font-ntypeMono text-[10px] opacity-10 italic uppercase">NO_ASSET_FOUND</div>
+                        )}
+                      </motion.div>
+                    </div>
+
+                    {/* Product Info */}
+                    <div className="mt-auto relative z-10 pointer-events-none">
+                      <div className="flex justify-between items-end mb-6">
+                        <h2 className="font-ndot text-2xl uppercase text-black leading-[1.1] max-w-[75%]">
+                          {product.title}
+                        </h2>
+                        <div className="pointer-events-auto">
+                           <ArrowButton href={`/products/${product.handle}`} />
+                        </div>
+                      </div>
+
+                      <div className="flex justify-between items-center pt-5 border-t border-black/[0.05]">
+                        <div className="flex flex-col">
+                          {isOnSale && compareAtPrice && (
+                            <span className="font-ndot text-[12px] text-black/30 line-through tracking-tighter mb-0.5">
+                              {formatCurrency(compareAtPrice.amount, compareAtPrice.currencyCode)}
+                            </span>
+                          )}
+                          <span className="font-ndot text-xl text-black tracking-tight leading-none">
+                            {price ? formatCurrency(price.amount, price.currencyCode) : 'TBD'}
+                          </span>
+                        </div>
+
+                        <div className="pointer-events-auto">
+                          <AddToBasketButton />
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </main>
     </>
