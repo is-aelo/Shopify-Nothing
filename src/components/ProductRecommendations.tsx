@@ -43,8 +43,8 @@ export default function ProductRecommendations({ related = [], complementary = [
     }).format(Number(amt));
 
   return (
-    <section className="mt-32 border-t border-black/[0.05] pt-20">
-      <div className="flex items-baseline justify-between mb-10 px-4 md:px-0">
+    <section className="mt-16 border-t border-black/[0.05] pt-16 max-w-[1440px] mx-auto px-6 md:px-12">
+      <div className="flex items-baseline justify-between mb-10">
         <h2 className="font-ndot text-xl md:text-2xl uppercase tracking-tighter">
           {complementary.length > 0 ? "Complete the look" : "You May Also Like"}
         </h2>
@@ -54,7 +54,7 @@ export default function ProductRecommendations({ related = [], complementary = [
       </div>
 
       {/* Horizontal Scroll Area */}
-      <div className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar gap-4 pb-10 px-4 md:px-0">
+      <div className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar gap-6 pb-10">
         {allProducts.map((product, idx) => {
           const variant = product.variants.edges[0]?.node;
           const price = variant?.price;
@@ -64,29 +64,34 @@ export default function ProductRecommendations({ related = [], complementary = [
           return (
             <motion.div 
               key={product.id}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 15 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.1 }}
-              viewport={{ once: true }}
+              transition={{ delay: idx * 0.08, duration: 0.5 }}
+              viewport={{ once: true, margin: "-50px" }}
               className="flex-shrink-0 w-[240px] md:w-[300px] snap-start"
             >
               <Link href={`/products/${product.handle}`} className="group block">
-                <div className="aspect-square bg-[#F9F9F9] border border-black/[0.03] rounded-sm overflow-hidden p-8 flex items-center justify-center mb-4 transition-all duration-500 group-hover:border-black/10">
+                {/* NEW HOVER EFFECT CONTAINER
+                   From scale-110 (thumping) to a clean border fade + subtle image fade
+                */}
+                <div className="aspect-square bg-[#F9F9F9] border border-black/[0.03] rounded-sm overflow-hidden p-8 flex items-center justify-center mb-4 transition-all duration-500 ease-out group-hover:border-black/10 group-hover:bg-[#f3f3f3]">
                   {imgUrl ? (
                     <img 
                       src={imgUrl} 
                       alt={product.title} 
-                      className="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-700 ease-in-out" 
+                      className="w-full h-full object-contain mix-blend-multiply transition-opacity duration-500 group-hover:opacity-80" 
                     />
                   ) : (
                     <div className="w-full h-full bg-gray-100 animate-pulse" />
                   )}
                 </div>
                 
-                <h3 className="font-ndot text-xs md:text-sm uppercase tracking-tight mb-1 truncate">
+                {/* Product Title - Add subtle hover effect */}
+                <h3 className="font-ndot text-xs md:text-sm uppercase tracking-tight mb-1 truncate group-hover:text-black/80 transition-colors">
                   {product.title}
                 </h3>
                 
+                {/* Price */}
                 <div className="flex items-center gap-2">
                   <span className="font-ntypeMono text-[11px] md:text-[12px] opacity-60">
                     {price ? formatPrice(price.amount, price.currencyCode) : "No price"}

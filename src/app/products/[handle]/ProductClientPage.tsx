@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Header from '@/components/Header';
+import Breadcrumbs from '@/components/Breadcrumbs'; // Import Breadcrumbs
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Minus, CreditCard } from "@phosphor-icons/react";
 import Zoom from 'react-medium-image-zoom';
@@ -64,7 +65,6 @@ export default function ProductClientPage({ product }: { product: any }) {
   const compareAtPrice = selectedVariant?.compareAtPrice;
   const isOnSale = compareAtPrice && Number(compareAtPrice.amount) > Number(price?.amount);
   
-  // Calculate Savings
   const savingsAmount = isOnSale ? (Number(compareAtPrice.amount) - Number(price.amount)) * quantity : 0;
 
   const formatPrice = (amt: string | number, code: string) => 
@@ -86,8 +86,14 @@ export default function ProductClientPage({ product }: { product: any }) {
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-white pt-16 md:pt-20 pb-44 px-4 md:px-8">
+      <main className="min-h-screen bg-white pt-24 md:pt-32 pb-44 px-4 md:px-8">
         <div className="max-w-[1440px] mx-auto">
+          
+          {/* BREADCRUMBS POSITION */}
+          <div className="mb-8 md:mb-12">
+            <Breadcrumbs />
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-[80px_1fr_400px] xl:grid-cols-[100px_1fr_450px] gap-6 md:gap-8 xl:gap-20 items-start">
             
             {/* 1. DESKTOP THUMBNAILS */}
@@ -216,7 +222,6 @@ export default function ProductClientPage({ product }: { product: any }) {
                 <span>Buy Now</span>
               </div>
               
-              {/* SAVINGS BADGE INSIDE BUTTON */}
               {isOnSale && (
                 <motion.span 
                   initial={{ opacity: 0, y: 5 }}

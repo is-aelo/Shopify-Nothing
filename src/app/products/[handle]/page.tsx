@@ -8,42 +8,35 @@ interface PageProps {
 }
 
 export default async function Page({ params }: PageProps) {
-  // 1. Await the params (Next.js 15 requirement)
   const { handle } = await params;
 
-  // 2. Fetch Main Product Data
   const response = await getProductByHandle(handle);
   const product = response?.body?.data?.productByHandle;
 
-  // 3. 404 Guard
   if (!product) {
     console.error(`[SYSTEM_LOG] 404: Product "${handle}" not found.`);
     notFound();
   }
 
-  /**
-   * 4. Fetch Hybrid Recommendations
-   * Kukunin natin ang 'related' at 'complementary' arrays
-   * base sa in-update nating shopifyFetch logic.
-   */
   const recoResponse = await getProductRecommendations(product.id);
   const related = recoResponse?.body?.data?.related || [];
   const complementary = recoResponse?.body?.data?.complementary || [];
 
   return (
-    <div className="bg-white">
-      {/* Main Product Section */}
+    <main className="bg-white min-h-screen">
+      {/* Main Product Section 
+          Dito manggagaling ang padding-bottom para sa natural spacing 
+      */}
       <ProductClientPage product={product} />
 
-      {/* Recommendations Section - Bottom Area */}
-      <div className="max-w-[1440px] mx-auto px-4 md:px-8">
-        {/* Ipinapasa na natin ang dalawang arrays para ma-render ng component */}
-        <ProductRecommendations 
-          related={related} 
-          complementary={complementary} 
-        />
-      </div>
-    </div>
+      {/* Recommendations Section
+          Inalis natin ang extra wrapper div para hindi mag-clash ang max-widths 
+      */}
+      <ProductRecommendations 
+        related={related} 
+        complementary={complementary} 
+      />
+    </main>
   );
 }
 
@@ -54,7 +47,6 @@ export async function generateMetadata({ params }: PageProps) {
 
   if (!product) return { title: 'Product Not Found' };
 
-  // SEO: Clean HTML tags from description
   const cleanDescription = product.descriptionHtml
     ?.replace(/<[^>]*>?/gm, '')
     .slice(0, 160);
