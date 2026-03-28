@@ -3,16 +3,56 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X } from "@phosphor-icons/react";
+// Inimport lahat ng kailangang icons mula sa Phosphor
+import { 
+  X, 
+  House, 
+  Storefront, 
+  DeviceMobile, 
+  Headphones, 
+  Watch, 
+  Briefcase, 
+  Sparkle,
+  User,
+  Lifebuoy,
+  FileText
+} from "@phosphor-icons/react";
 
 const NAV_LINKS = [
-  { name: 'Shop All', href: '/products' }, // Updated to point to our new inventory page
-  { name: 'Phones', href: '/phones' },
-  { name: 'Audio', href: '/audio' },
-  { name: 'Watches', href: '/watches' },
-  { name: 'Accessories', href: '/accessories' },
-  { name: 'CMF', href: '/cmf' },
+  { name: 'Home',        href: '/',            icon: House },
+  { name: 'Shop All',    href: '/products',    icon: Storefront },
+  { name: 'Phones',      href: '/phones',      icon: DeviceMobile },
+  { name: 'Audio',       href: '/audio',       icon: Headphones },
+  { name: 'Watches',     href: '/watches',     icon: Watch },
+  { name: 'Accessories', href: '/accessories', icon: Briefcase },
+  { name: 'CMF',         href: '/cmf',         icon: Sparkle },
 ];
+
+const FOOTER_LINKS = [
+  { name: 'Account', href: '/account', icon: User },
+  { name: 'Support', href: '/support', icon: Lifebuoy },
+  { name: 'Legal',   href: '/legal',   icon: FileText },
+];
+
+const backdropVariants = {
+  hidden:  { opacity: 0 },
+  visible: { opacity: 1, transition: { duration: 0.4 } },
+};
+
+const panelVariants = {
+  hidden:  { x: '-100%' },
+  visible: { x: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } },
+};
+
+const listVariants = {
+  hidden:  { transition: { staggerChildren: 0.03, staggerDirection: -1 } },
+  visible: { transition: { staggerChildren: 0.05, delayChildren: 0.2 } },
+};
+
+const itemVariants = {
+  hidden:  { opacity: 0, x: -10 },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } },
+};
 
 interface NavigationProps {
   isOpen: boolean;
@@ -26,80 +66,102 @@ export default function Navigation({ isOpen, onClose }: NavigationProps) {
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Subtle Grayscale Backdrop */}
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[90] bg-white/20 backdrop-grayscale-[0.5] backdrop-blur-sm pointer-events-none"
+          <motion.div
+            variants={backdropVariants}
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            onClick={onClose}
+            className="fixed inset-0 z-[90] bg-white/60 backdrop-blur-sm cursor-pointer"
           />
 
           <motion.div
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed inset-0 z-[100] flex flex-col bg-white/90 backdrop-blur-[40px] border-l border-black/5"
+            variants={panelVariants}
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            className="fixed inset-y-0 left-0 z-[100] flex w-full md:w-[480px] flex-col bg-white border-r border-black/5"
           >
-            {/* Menu Header - Clean and Minimal */}
-            <div className="flex items-center justify-between px-6 py-[18px]">
-              <button onClick={onClose} className="p-2 -ml-2 hover:opacity-50 transition-opacity">
-                <X size={22} weight="thin" className="text-black" />
+            {/* Header */}
+            <div className="flex items-center justify-end px-6 py-[18px]">
+              <button
+                onClick={onClose}
+                aria-label="Close menu"
+                className="p-2 hover:opacity-40 transition-opacity active:scale-95"
+              >
+                <X size={24} weight="light" className="text-black" />
               </button>
-              <div className="w-[38px]" /> 
             </div>
 
-            {/* Links Container - Left Aligned Indent */}
-            <div className="flex flex-col items-start justify-center flex-grow pl-[10%] space-y-1">
-              {NAV_LINKS.map((link, i) => {
+            {/* Main Links */}
+            <motion.div
+              variants={listVariants}
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+              className="flex flex-col items-start justify-center flex-grow pl-10 md:pl-20 space-y-2"
+            >
+              {NAV_LINKS.map((link) => {
                 const isActive = pathname === link.href;
+                const Icon = link.icon;
 
                 return (
-                  <motion.div
-                    key={link.name}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.05 + 0.2 }}
-                  >
+                  <motion.div key={link.name} variants={itemVariants}>
                     <Link
                       href={link.href}
                       onClick={onClose}
-                      className="group relative flex items-center py-2"
+                      className="group relative flex items-center py-2 gap-4"
                     >
-                      <span 
-                        className={`font-ndotCaps text-5xl md:text-7xl tracking-tighter transition-all duration-500
-                          ${isActive ? 'text-black' : 'text-gray/20 group-hover:text-black group-hover:pl-4'}`}
+                      {/* Phosphor Icon added here */}
+                      <Icon 
+                        size={32} 
+                        weight="light" 
+                        className={`transition-colors duration-500 ${isActive ? 'text-[#ff0000]' : 'text-black/10 group-hover:text-black'}`} 
+                      />
+                      
+                      <span
+                        className={`font-ndotCaps text-4xl sm:text-5xl md:text-5xl transition-all duration-500
+                          ${isActive
+                            ? 'text-black tracking-tight'
+                            : 'text-black/10 tracking-tight group-hover:text-black'
+                          }`}
                       >
                         {link.name}
                       </span>
-                      
+
                       {isActive && (
-                        <motion.span 
+                        <motion.div
                           layoutId="nav-pill"
-                          className="ml-4 h-2 w-2 rounded-full bg-black"
+                          className="h-1.5 w-1.5 rounded-full bg-[#ff0000]"
                         />
                       )}
                     </Link>
                   </motion.div>
                 );
               })}
-            </div>
+            </motion.div>
 
-            {/* Bottom Utility - User Friendly Labels */}
-            <div className="p-10 flex justify-between items-center border-t border-black/5">
-               <div className="flex gap-10">
-                {['Account', 'Support', 'Legal'].map((item) => (
-                  <Link 
-                    key={item} 
-                    href={`/${item.toLowerCase()}`}
-                    onClick={onClose}
-                    className="font-ntype text-[10px] uppercase tracking-[0.2em] text-gray/60 hover:text-black transition-colors"
-                  >
-                    {item}
-                  </Link>
-                ))}
+            {/* Footer */}
+            <div className="p-10 flex flex-col gap-8 border-t border-black/5">
+              <div className="flex gap-8">
+                {FOOTER_LINKS.map((item) => {
+                  const FooterIcon = item.icon;
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      onClick={onClose}
+                      className="group flex items-center gap-2 font-ntypeMono text-[10px] uppercase tracking-widest text-black/40 hover:text-black transition-colors"
+                    >
+                      <FooterIcon size={14} weight="light" />
+                      {item.name}
+                    </Link>
+                  );
+                })}
               </div>
-              <p className="font-ntypeMono text-[10px] text-gray/40">© 2026</p>
+              <p className="font-ntypeMono text-[10px] text-black/20 uppercase tracking-[0.3em]">
+                © Nothing Technology Limited
+              </p>
             </div>
           </motion.div>
         </>

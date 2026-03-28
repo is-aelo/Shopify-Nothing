@@ -1,76 +1,112 @@
 "use client";
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { List, MagnifyingGlass, ShoppingBag } from "@phosphor-icons/react";
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { User, MagnifyingGlass, ShoppingBag } from "@phosphor-icons/react";
+import Link from 'next/link';
 import BrandLogo from './BrandLogo';
 import Navigation from './Navigation';
-import Search from './Search'; // Import the new Search component
+import Search from './Search';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [cartCount] = useState(0); 
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = isMenuOpen || isSearchOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [isMenuOpen, isSearchOpen]);
 
   return (
     <>
-      <motion.nav 
-        initial={{ y: -20, opacity: 0 }}
+      <motion.header
+        initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-        className="sticky top-0 z-50 w-full border-b border-black/5 bg-white/70 backdrop-blur-xl"
+        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+        style={{ backgroundColor: 'rgba(255, 255, 255, 0.95)' }}
+        className={`sticky top-0 z-50 w-full transition-all duration-300 backdrop-blur-xl ${
+          scrolled ? 'border-b border-black/[0.04] py-2' : 'border-b border-transparent py-4'
+        }`}
       >
-        <div className="mx-auto grid max-w-7xl grid-cols-3 items-center px-6 py-3">
+        <div className="mx-auto grid max-w-7xl grid-cols-3 items-center px-4 sm:px-6 lg:px-8">
           
-          {/* Left: Menu Trigger */}
-          <div className="flex items-center justify-start">
-            <button 
+          {/* ── LEFT: Navigation & Discovery (Menu + Search) ──────────────── */}
+          <div className="flex items-center justify-start gap-1">
+            <button
               onClick={() => setIsMenuOpen(true)}
-              className="p-2 -ml-2 transition-opacity hover:opacity-50"
+              className="group flex flex-col gap-[3.5px] p-2 transition-all active:scale-90"
+              aria-label="Menu"
             >
-              <List size={22} weight="thin" className="text-black" />
+              <span className="h-[1.2px] w-5 bg-black" />
+              <span className="h-[1.2px] w-3 bg-black transition-all group-hover:w-5" />
             </button>
+
+            {/* Search moved here for balance */}
+            <IconButton label="Search" onClick={() => setIsSearchOpen(true)}>
+              <MagnifyingGlass size={20} weight="thin" />
+            </IconButton>
           </div>
 
-          {/* Center: Brand Identity */}
+          {/* ── CENTER: Brand_Identity ──────────────── */}
           <div className="flex justify-center">
-            <BrandLogo variant="header" />
+            <div className={`transition-transform duration-500 ${scrolled ? 'scale-90' : 'scale-100'}`}>
+              <BrandLogo variant="header" />
+            </div>
           </div>
 
-          {/* Right: Actions */}
-          <div className="flex items-center justify-end gap-3 md:gap-4">
-            {/* Search Trigger */}
-            <button 
-              onClick={() => setIsSearchOpen(true)}
-              className="p-2 transition-opacity hover:opacity-50"
-            >
-              <MagnifyingGlass size={20} weight="thin" className="text-black" />
-            </button>
-            
-            <motion.button 
-              whileHover={{ scale: 0.98 }}
-              whileTap={{ scale: 0.95 }}
-              className="group flex items-center gap-2 border border-black/10 px-3 py-1.5 transition-all hover:bg-black hover:text-white"
-            >
-              <ShoppingBag size={18} weight="thin" className="group-hover:text-white" />
-              <span className="font-ndot text-[10px] uppercase tracking-tighter">
-                Cart [0]
-              </span>
-            </motion.button>
+          {/* ── RIGHT: User_Portal (Account + Cart) ──────────────── */}
+          <div className="flex justify-end items-center gap-1">
+            <Link href="/account" className={iconButtonBase} aria-label="Account">
+              <User size={20} weight="thin" />
+            </Link>
+
+            <div className="relative">
+              <IconButton label="Cart">
+                <ShoppingBag size={20} weight="thin" />
+              </IconButton>
+              
+              {/* Nothing-style badge logic */}
+              <AnimatePresence>
+                {cartCount > 0 && (
+                  <motion.span 
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    exit={{ scale: 0 }}
+                    className="absolute right-1 top-1 flex h-3.5 min-w-[0.875rem] items-center justify-center rounded-full bg-black px-1 font-ntypeMono text-[7px] text-white"
+                  >
+                    {cartCount > 9 ? '9+' : cartCount}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
-      </motion.nav>
+      </motion.header>
 
-      {/* Full-Screen Navigation Overlay */}
-      <Navigation 
-        isOpen={isMenuOpen} 
-        onClose={() => setIsMenuOpen(false)} 
-      />
-
-      {/* Full-Screen Search Overlay */}
-      <Search 
-        isOpen={isSearchOpen} 
-        onClose={() => setIsSearchOpen(false)} 
-      />
+      <AnimatePresence mode="wait">
+        {isMenuOpen && <Navigation key="nav" isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />}
+        {isSearchOpen && <Search key="search" isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />}
+      </AnimatePresence>
     </>
+  );
+}
+
+// ── Shared Styling ──────────────────────────────────────────────────────────
+
+const iconButtonBase = "flex h-9 w-9 items-center justify-center rounded-sm transition-all hover:bg-black/[0.03] active:scale-90 text-black";
+
+function IconButton({ label, onClick, children }: { label: string; onClick?: () => void; children: React.ReactNode }) {
+  return (
+    <button onClick={onClick} aria-label={label} className={iconButtonBase}>
+      {children}
+    </button>
   );
 }

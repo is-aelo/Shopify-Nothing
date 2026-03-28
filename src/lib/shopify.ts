@@ -19,7 +19,6 @@ export async function shopifyFetch({ query, variables = {} }: { query: string, v
 
     const body = await result.json();
 
-    // Check for GraphQL errors (e.g., syntax errors in your query)
     if (body.errors) {
       console.error('[SHOPIFY_ERROR]:', JSON.stringify(body.errors, null, 2));
     }
@@ -46,11 +45,19 @@ export async function getAllProducts() {
             id
             title
             handle
-            description
-            priceRange {
-              minVariantPrice {
-                amount
-                currencyCode
+            descriptionHtml
+            variants(first: 1) {
+              edges {
+                node {
+                  price {
+                    amount
+                    currencyCode
+                  }
+                  compareAtPrice {
+                    amount
+                    currencyCode
+                  }
+                }
               }
             }
             images(first: 1) {
@@ -58,8 +65,6 @@ export async function getAllProducts() {
                 node {
                   url
                   altText
-                  width
-                  height
                 }
               }
             }
@@ -80,11 +85,19 @@ export async function getSearchResults(searchTerm: string) {
               id
               title
               handle
-              description
-              priceRange {
-                minVariantPrice {
-                  amount
-                  currencyCode
+              descriptionHtml
+              variants(first: 1) {
+                edges {
+                  node {
+                    price {
+                      amount
+                      currencyCode
+                    }
+                    compareAtPrice {
+                      amount
+                      currencyCode
+                    }
+                  }
                 }
               }
               images(first: 1) {
@@ -92,8 +105,6 @@ export async function getSearchResults(searchTerm: string) {
                   node {
                     url
                     altText
-                    width
-                    height
                   }
                 }
               }
@@ -109,21 +120,26 @@ export async function getSearchResults(searchTerm: string) {
 }
 
 export async function getProductByHandle(handle: string) {
-  // DEBUG LOGS - Check your terminal!
-  console.log(`[SHOPIFY_DEBUG] Attempting fetch for handle: ${handle}`);
-
-  const res = await shopifyFetch({
+  return shopifyFetch({
     query: `
       query getProduct($handle: String!) {
         productByHandle(handle: $handle) {
           id
           title
           handle
-          description
-          priceRange {
-            minVariantPrice {
-              amount
-              currencyCode
+          descriptionHtml
+          variants(first: 1) {
+            edges {
+              node {
+                price {
+                  amount
+                  currencyCode
+                }
+                compareAtPrice {
+                  amount
+                  currencyCode
+                }
+              }
             }
           }
           images(first: 5) {
@@ -131,8 +147,6 @@ export async function getProductByHandle(handle: string) {
               node {
                 url
                 altText
-                width
-                height
               }
             }
           }
@@ -143,12 +157,4 @@ export async function getProductByHandle(handle: string) {
       handle: handle
     }
   });
-
-  if (res.body?.data?.productByHandle) {
-    console.log(`[SHOPIFY_DEBUG] Success: Found ${res.body.data.productByHandle.title}`);
-  } else {
-    console.warn(`[SHOPIFY_DEBUG] Failed: No product found for handle: ${handle}`);
-  }
-
-  return res;
 }
