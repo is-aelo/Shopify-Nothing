@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import { Suspense } from "react";
 import CartDrawer from "@/components/CartDrawer";
+import CartRecovery from "@/components/CartRecovery";
 
 // 1. NDot Matrix Fonts
 const ndot = localFont({
@@ -52,6 +54,13 @@ export default function RootLayout({
           min-h-full flex flex-col bg-pureWhite text-black
         `}
       >
+        {/* CartRecovery needs Suspense because useSearchParams() 
+          triggers client-side rendering during the build process.
+        */}
+        <Suspense fallback={null}>
+          <CartRecovery />
+        </Suspense>
+
         {/* Main Content */}
         {children}
 

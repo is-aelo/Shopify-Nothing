@@ -4,23 +4,40 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowUpRight, ShoppingBag, Check } from "lucide-react";
 import { useState } from 'react';
-
-// ── Palette Mapping ────────────────────────────────────────────────────────
-// --black: #07080F;
-// --pure-white: #FFFFFF;
-// --white: #F5F5F5;
-// --grayish-white: #E1E2E3;
+import { useCartStore } from '@/store/useCartStore';
 
 // ── Internal Sub-Component: Refined Add to Basket ──────────────────────────
-function AddToBasketButton() {
+function AddToBasketButton({ product, variant }: { product: any; variant: any }) {
   const [hovered, setHovered] = useState(false);
   const [added, setAdded] = useState(false);
+  const addItem = useCartStore((state) => state.addItem);
 
   function handleClick(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
+    
     if (added) return;
+
+    // Actual Cart Logic - Updated to match ProductActionMenu structure for consistency
+    addItem({
+      id: product.id,
+      variantId: variant.id,
+      title: product.title,
+      variantTitle: variant.title,
+      price: variant.price,
+      image: product.images?.edges?.[0]?.node?.url,
+      quantity: 1,
+      handle: product.handle,
+      allVariants: product.variants?.edges?.map((edge: any) => ({
+        id: edge.node.id,
+        title: edge.node.title,
+        price: edge.node.price,
+        image: edge.node.image?.url
+      })) || []
+    });
+
     setAdded(true);
+
     setTimeout(() => {
       setAdded(false);
       setHovered(false);
@@ -35,7 +52,9 @@ function AddToBasketButton() {
       onHoverEnd={() => !added && setHovered(false)}
       onClick={handleClick}
       animate={{
-        width: isExpanded ? (typeof window !== 'undefined' && window.innerWidth < 768 ? 100 : 120) : (typeof window !== 'undefined' && window.innerWidth < 768 ? 40 : 38),
+        width: isExpanded 
+          ? (typeof window !== 'undefined' && window.innerWidth < 768 ? 100 : 120) 
+          : (typeof window !== 'undefined' && window.innerWidth < 768 ? 40 : 38),
         backgroundColor: added ? '#07080F' : isExpanded ? '#07080F' : '#FFFFFF',
         borderColor: added ? '#07080F' : isExpanded ? '#07080F' : '#E1E2E3',
       }}
@@ -158,7 +177,7 @@ export default function ProductCard({ product }: { product: any }) {
           </div>
 
           <div className="pointer-events-auto flex items-center justify-end min-w-[42px]">
-            <AddToBasketButton />
+            <AddToBasketButton product={product} variant={variant} />
           </div>
         </div>
       </div>

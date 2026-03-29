@@ -31,7 +31,7 @@ export async function shopifyFetch({
     const body = await result.json();
 
     if (body.errors) {
-      console.error('[SHOPIFY_ERROR]:', JSON.stringify(body.errors, null, 2));
+      console.error('[SHOPIFY_FETCH_ERROR]:', JSON.stringify(body.errors, null, 2));
     }
 
     return {
@@ -48,18 +48,52 @@ export async function shopifyFetch({
 }
 
 /**
- * CHECKOUT CREATION
- * Converts Zustand cart items into a Shopify Checkout URL
+ * NEW: Get Cart Status
+ * Ginagamit ito para malaman kung converted na ang cart into an order.
+ */
+export async function getCart(cartId: string) {
+  const query = `
+    query getCart($cartId: ID!) {
+      cart(id: $cartId) {
+        id
+        totalQuantity
+        lines(first: 10) {
+          edges {
+            node {
+              id
+              quantity
+            }
+          }
+        }
+      }
+    }
+  `;
+
+  try {
+    const res = await shopifyFetch({
+      query,
+      variables: { cartId },
+    });
+    return res.body?.data?.cart;
+  } catch (error) {
+    console.error('[GET_CART_ERROR]:', error);
+    return null;
+  }
+}
+
+/**
+ * UPDATED: CART-BASED CHECKOUT
+ * Ngayon, ibinabalik na rin natin ang 'id' ng cart.
  */
 export async function createCheckout(lineItems: { variantId: string; quantity: number }[]) {
   const query = `
-    mutation checkoutCreate($input: CheckoutCreateInput!) {
-      checkoutCreate(input: $input) {
-        checkout {
+    mutation cartCreate($input: CartInput!) {
+      cartCreate(input: $input) {
+        cart {
           id
-          webUrl
+          checkoutUrl
         }
-        checkoutUserErrors {
+        userErrors {
           code
           field
           message
@@ -68,22 +102,45 @@ export async function createCheckout(lineItems: { variantId: string; quantity: n
     }
   `;
 
-  const variables = {
-    input: {
-      lineItems: lineItems.map(item => ({
-        variantId: item.variantId,
-        quantity: item.quantity
-      }))
+  const formattedLineItems = lineItems.map(item => ({
+    merchandiseId: item.variantId,
+    quantity: Math.max(1, item.quantity)
+  }));
+
+  try {
+    const res = await shopifyFetch({
+      query,
+      variables: { 
+        input: { 
+          lines: formattedLineItems,
+          attributes: [
+            { key: "checkout_origin", value: "nothing_headless_ph" }
+          ]
+        } 
+      },
+    });
+
+    if (res.body?.data?.cartCreate?.userErrors?.length > 0) {
+      console.error('[CART_USER_ERROR]:', res.body.data.cartCreate.userErrors);
+      return null;
     }
-  };
 
-  const res = await shopifyFetch({
-    query,
-    variables,
-  });
+    const cart = res.body?.data?.cartCreate?.cart;
+    
+    if (!cart || !cart.checkoutUrl) {
+      console.error('[CART_NULL]: No checkout URL returned.');
+      return null;
+    }
 
-  // I-return ang checkout object (nandoon ang webUrl)
-  return res.body.data?.checkoutCreate?.checkout;
+    // Ibinabalik na natin ang id para ma-track sa frontend
+    return {
+      cartId: cart.id,
+      webUrl: cart.checkoutUrl
+    };
+  } catch (error) {
+    console.error('[CART_SYSTEM_ERROR]:', error);
+    return null;
+  }
 }
 
 export async function getAllProducts() {
@@ -99,6 +156,7 @@ export async function getAllProducts() {
             variants(first: 1) {
               edges {
                 node {
+                  id
                   price {
                     amount
                     currencyCode
@@ -136,15 +194,11 @@ export async function getSearchResults(searchTerm: string) {
               id
               title
               handle
-              descriptionHtml
               variants(first: 1) {
                 edges {
                   node {
+                    id
                     price {
-                      amount
-                      currencyCode
-                    }
-                    compareAtPrice {
                       amount
                       currencyCode
                     }
@@ -164,9 +218,7 @@ export async function getSearchResults(searchTerm: string) {
         }
       }
     `,
-    variables: {
-      query: searchTerm
-    }
+    variables: { query: searchTerm }
   });
 }
 
@@ -196,10 +248,6 @@ export async function getProductByHandle(handle: string) {
                   amount
                   currencyCode
                 }
-                compareAtPrice {
-                  amount
-                  currencyCode
-                }
                 image {
                   url
                   altText
@@ -218,9 +266,7 @@ export async function getProductByHandle(handle: string) {
         }
       }
     `,
-    variables: {
-      handle: handle
-    },
+    variables: { handle },
     tags: [`product-${handle}`]
   });
 }
@@ -244,11 +290,8 @@ export async function getProductRecommendations(productId: string) {
         variants(first: 1) {
           edges {
             node {
+              id
               price {
-                amount
-                currencyCode
-              }
-              compareAtPrice {
                 amount
                 currencyCode
               }
@@ -265,9 +308,7 @@ export async function getProductRecommendations(productId: string) {
         }
       }
     `,
-    variables: {
-      productId: productId
-    },
+    variables: { productId },
     tags: ['recommendations']
   });
 }

@@ -7,6 +7,7 @@
   --grayish-white: #E1E2E3;
   --gray: #373B3B;
   --black: #07080F;
+  --red: #D71921
 
   /* Functional Mappings - Switched for White Aesthetic */
   --background: var(--pure-white);
@@ -21,6 +22,7 @@
   --color-grayishWhite: var(--grayish-white);
   --color-gray: var(--gray);
   --color-black: var(--black);
+  --color-red: var(--red);
 
   /* Font Mappings */
   /* NDOT */

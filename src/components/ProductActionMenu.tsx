@@ -41,11 +41,11 @@ export default function ProductActionMenu({
 
     addItem({
       id: product.id,
-      variantId: selectedVariant.id,
+      variantId: selectedVariant.id, // Shopify GID
       title: product.title,
       variantTitle: selectedVariant.title,
       price: selectedVariant.price,
-      image: product.images?.edges?.[0]?.node?.url,
+      image: product.images?.edges?.[0]?.node?.url || product.featuredImage?.url,
       quantity: quantity,
       handle: product.handle,
       allVariants: product.variants?.edges?.map((edge: any) => ({

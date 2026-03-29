@@ -41,65 +41,74 @@ export const useCartStore = create<CartState>()(
 
       addItem: (newItem) =>
         set((state) => {
-          const existingItem = state.cartItems.find(
-            (item) => item.variantId === newItem.variantId
+          // Normalize ID to prevent mismatch
+          const incomingId = String(newItem.variantId).trim();
+          
+          const existingItemIndex = state.cartItems.findIndex(
+            (item) => String(item.variantId).trim() === incomingId
           );
 
-          if (existingItem) {
+          if (existingItemIndex > -1) {
+            const updatedItems = [...state.cartItems];
+            updatedItems[existingItemIndex] = {
+              ...updatedItems[existingItemIndex],
+              quantity: updatedItems[existingItemIndex].quantity + newItem.quantity,
+            };
             return {
-              cartItems: state.cartItems.map((item) =>
-                item.variantId === newItem.variantId
-                  ? { ...item, quantity: item.quantity + newItem.quantity }
-                  : item
-              ),
+              cartItems: updatedItems,
               isCartOpen: true,
             };
           }
+
           return {
-            cartItems: [...state.cartItems, newItem],
+            cartItems: [...state.cartItems, { ...newItem, variantId: incomingId }],
             isCartOpen: true,
           };
         }),
 
       removeItem: (variantId) =>
         set((state) => ({
-          cartItems: state.cartItems.filter((item) => item.variantId !== variantId),
+          cartItems: state.cartItems.filter(
+            (item) => String(item.variantId).trim() !== String(variantId).trim()
+          ),
         })),
 
       updateQuantity: (variantId, quantity) =>
         set((state) => ({
           cartItems: state.cartItems.map((item) =>
-            item.variantId === variantId ? { ...item, quantity } : item
+            String(item.variantId).trim() === String(variantId).trim() 
+              ? { ...item, quantity } 
+              : item
           ),
         })),
 
       updateVariant: (oldVariantId, newVariant) =>
         set((state) => {
-          // 1. Update the target item with new variant details
+          const normalizedOldId = String(oldVariantId).trim();
+          const normalizedNewId = String(newVariant.id).trim();
+
           const updatedItems = state.cartItems.map((item) => {
-            if (item.variantId === oldVariantId) {
+            if (String(item.variantId).trim() === normalizedOldId) {
               return {
                 ...item,
-                variantId: newVariant.id,
+                variantId: normalizedNewId,
                 variantTitle: newVariant.title,
                 price: newVariant.price,
-                // Kinukuha ang URL mula sa Shopify image node kung available
                 image: newVariant.image?.url || newVariant.image || item.image,
               };
             }
             return item;
           });
 
-          // 2. Merge logic: Kung ang bagong variant ay exist na sa cart, pagsamahin ang quantity
-          // Ginagamit ang reduce para linisin ang duplicates pagkatapos ng update
           const mergedItems = updatedItems.reduce((acc: CartItem[], current) => {
-            const duplicate = acc.find((item) => item.variantId === current.variantId);
+            const currentId = String(current.variantId).trim();
+            const duplicate = acc.find((item) => String(item.variantId).trim() === currentId);
+            
             if (duplicate) {
               duplicate.quantity += current.quantity;
-              // Siguraduhin na ang metadata ay preserved
               duplicate.allVariants = current.allVariants || duplicate.allVariants;
             } else {
-              acc.push({ ...current });
+              acc.push({ ...current, variantId: currentId });
             }
             return acc;
           }, []);
@@ -107,7 +116,10 @@ export const useCartStore = create<CartState>()(
           return { cartItems: mergedItems };
         }),
 
-      clearCart: () => set({ cartItems: [] }),
+      clearCart: () => {
+        console.log('[CART_ACTION]: Cart cleared after successful checkout attempt.');
+        set({ cartItems: [] });
+      },
     }),
     {
       name: 'nothing-cart-storage',
