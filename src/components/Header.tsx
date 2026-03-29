@@ -70,9 +70,18 @@ export default function Header() {
 
           {/* ── RIGHT: User_Portal ──────────────── */}
           <div className="flex justify-end items-center gap-1">
-            <Link href="/account" className={iconButtonBase} aria-label="Account">
+            {/* FIX: Inalis ang <Link> at pinalitan ng <a> tag.
+                Ito ay para tumalon direkta sa Shopify at hindi i-intercept ng Next.js.
+            */}
+            <a 
+              href="https://eloise-nothing.myshopify.com/account/login" 
+              className={iconButtonBase} 
+              aria-label="Account"
+              rel="external"
+              target="_top"
+            >
               <User size={20} strokeWidth={1.2} />
-            </Link>
+            </a>
 
             <div className="relative">
               <IconButton label="Cart" onClick={openCart}>

@@ -18,19 +18,24 @@ import {
 } from "lucide-react";
 
 const NAV_LINKS = [
-  { name: 'Home',         href: '/',            icon: HouseIcon },
-  { name: 'Shop All',     href: '/products',    icon: ShoppingBag },
-  { name: 'Phones',       href: '/phones',      icon: Smartphone },
-  { name: 'Audio',        href: '/audio',       icon: Headphones },
-  { name: 'Watches',      href: '/watches',     icon: Watch },
+  { name: 'Home',         href: '/',             icon: HouseIcon },
+  { name: 'Shop All',     href: '/products',     icon: ShoppingBag },
+  { name: 'Phones',       href: '/phones',       icon: Smartphone },
+  { name: 'Audio',        href: '/audio',        icon: Headphones },
+  { name: 'Watches',      href: '/watches',      icon: Watch },
   { name: 'Accessories',  href: '/accessories', icon: Briefcase },
-  { name: 'CMF',          href: '/cmf',         icon: Zap },
+  { name: 'CMF',          href: '/cmf',          icon: Zap },
 ];
 
 const FOOTER_LINKS = [
-  { name: 'Account', href: '/account', icon: User },
-  { name: 'Support', href: '/support', icon: LifeBuoy },
-  { name: 'Legal',   href: '/legal',   icon: FileText },
+  { 
+    name: 'Account', 
+    href: 'https://eloise-nothing.myshopify.com/account/login', 
+    icon: User,
+    isExternal: true 
+  },
+  { name: 'Support', href: '/support', icon: LifeBuoy, isExternal: false },
+  { name: 'Legal',   href: '/legal',   icon: FileText, isExternal: false },
 ];
 
 const backdropVariants = {
@@ -144,12 +149,30 @@ export default function Navigation({ isOpen, onClose }: NavigationProps) {
               <div className="flex gap-8">
                 {FOOTER_LINKS.map((item) => {
                   const FooterIcon = item.icon;
+                  const commonStyles = "group flex items-center gap-2 font-ntypeMono text-[10px] uppercase tracking-widest text-black/40 hover:text-black transition-colors";
+                  
+                  if (item.isExternal) {
+                    return (
+                      <a
+                        key={item.name}
+                        href={item.href}
+                        rel="external"
+                        target="_top"
+                        onClick={onClose}
+                        className={commonStyles}
+                      >
+                        <FooterIcon size={14} strokeWidth={1.5} />
+                        {item.name}
+                      </a>
+                    );
+                  }
+
                   return (
                     <Link
                       key={item.name}
                       href={item.href}
                       onClick={onClose}
-                      className="group flex items-center gap-2 font-ntypeMono text-[10px] uppercase tracking-widest text-black/40 hover:text-black transition-colors"
+                      className={commonStyles}
                     >
                       <FooterIcon size={14} strokeWidth={1.5} />
                       {item.name}
