@@ -18,13 +18,13 @@ import {
 } from "lucide-react";
 
 const NAV_LINKS = [
-  { name: 'Home',         href: '/',             icon: HouseIcon },
-  { name: 'Shop All',     href: '/products',     icon: ShoppingBag },
-  { name: 'Phones',       href: '/phones',       icon: Smartphone },
-  { name: 'Audio',        href: '/audio',        icon: Headphones },
-  { name: 'Watches',      href: '/watches',      icon: Watch },
-  { name: 'Accessories',  href: '/accessories', icon: Briefcase },
-  { name: 'CMF',          href: '/cmf',          icon: Zap },
+  { name: 'Home',         href: '/',                       icon: HouseIcon },
+  { name: 'Shop All',     href: '/products',               icon: ShoppingBag },
+  { name: 'Phones',       href: '/products/category/phones', icon: Smartphone },
+  { name: 'Audio',        href: '/products/category/audio',  icon: Headphones },
+  { name: 'Watches',      href: '/products/category/smart-watches', icon: Watch },
+  { name: 'Accessories',  href: '/products/category/accessories', icon: Briefcase },
+  { name: 'CMF',          href: '/products/category/cmf',    icon: Zap },
 ];
 
 const FOOTER_LINKS = [

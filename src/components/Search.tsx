@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search as SearchIcon, X, ArrowRight, History } from "lucide-react";
+import { Search as SearchIcon, X, ArrowRight } from "lucide-react";
 import Link from 'next/link';
 import { useSearchStore } from '@/store/useSearchStore';
 
@@ -12,31 +12,25 @@ interface SearchProps {
 }
 
 export default function Search({ isOpen, onClose }: SearchProps) {
-  const { query, setQuery, results, isLoading, fetchResults, clearResults } = useSearchStore();
+  const { query, setQuery, results, isLoading, fetchResults } = useSearchStore();
   const [recentItems, setRecentItems] = useState<any[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // 1. Lifecycle & History
   useEffect(() => {
     if (isOpen) {
       const history = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
       setRecentItems(history);
       setTimeout(() => inputRef.current?.focus(), 150);
-    } else {
-      // Clear search when modal closes (Optional, para fresh lagi)
-      // clearResults(); 
     }
   }, [isOpen]);
 
-  // 2. Optimized Debounce Logic
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      fetchResults(query);
+      if (query.trim()) fetchResults(query);
     }, 400); 
     return () => clearTimeout(timeoutId);
   }, [query, fetchResults]);
 
-  // 3. Accessibility
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -52,64 +46,60 @@ export default function Search({ isOpen, onClose }: SearchProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[110] flex flex-col bg-white/95 backdrop-blur-[50px]"
+          className="fixed inset-0 z-[110] flex flex-col bg-[#F6F6F6] backdrop-blur-[20px]"
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-[18px]">
-            <button onClick={onClose} className="p-2 -ml-2 hover:opacity-50 text-black">
-              <X strokeWidth={1} size={22} />
-            </button>
-            <span className="font-ntypeMono text-[10px] uppercase tracking-[0.3em] text-black/40">
-              Terminal_Session: Global_Search
+          <div className="flex items-center justify-between px-8 py-8">
+            <span className="font-ntypeMono text-[10px] uppercase tracking-[0.2em] text-black/60">
+              Search
             </span>
-            <div className="w-[38px]" /> 
+            <button onClick={onClose} className="p-2 hover:opacity-40 transition-opacity">
+              <X strokeWidth={1} size={24} className="text-black" />
+            </button>
           </div>
 
-          <div className="mx-auto w-full max-w-4xl px-6 pt-20">
+          <div className="mx-auto w-full max-w-5xl px-8 pt-12">
             {/* Input Section */}
-            <div className="group relative border-b border-black/10 pb-4 focus-within:border-black transition-colors">
+            <div className="relative border-b border-black/10 pb-6">
               <input
                 ref={inputRef}
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="SEARCH_SYSTEM"
-                className="w-full bg-transparent font-ntypeMono text-4xl md:text-6xl uppercase tracking-tighter outline-none placeholder:text-black/5 text-black"
+                placeholder="Search Nothing..."
+                className="w-full bg-transparent font-ntypeMono text-6xl md:text-8xl uppercase tracking-tighter outline-none placeholder:text-black/[0.05] text-black"
               />
               <div className="absolute right-0 top-1/2 -translate-y-1/2">
                 {isLoading ? (
-                  <div className="h-6 w-6 border-t-2 border-black rounded-full animate-spin" />
+                  <div className="h-8 w-8 border-t border-black rounded-full animate-spin" />
                 ) : (
-                  <SearchIcon strokeWidth={1} size={32} className="text-black" />
+                  <SearchIcon strokeWidth={1} size={32} className="text-black/40" />
                 )}
               </div>
             </div>
 
-            <div className="mt-12 overflow-y-auto max-h-[60vh] pr-4 custom-scrollbar pb-20">
-              {/* RECENTLY VIEWED (Logic same as before) */}
+            <div className="mt-16 overflow-y-auto max-h-[65vh] pr-4 custom-scrollbar pb-24">
+              
+              {/* RECENTLY VIEWED */}
               {query.length === 0 && recentItems.length > 0 && (
-                <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-                  <div className="flex items-center gap-2 mb-6 opacity-40">
-                    <History size={14} strokeWidth={1.5} />
-                    <p className="font-ntypeMono text-[10px] uppercase tracking-widest text-black">Recently_Viewed_Logs</p>
-                  </div>
-                  <div className="grid grid-cols-1 gap-2">
+                <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                  <p className="font-ntypeMono text-[10px] uppercase tracking-[0.2em] text-black/60 mb-8">
+                    Recently Viewed
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {recentItems.map((product) => (
                       <Link 
                         key={product.handle} 
                         href={`/products/${product.handle}`} 
                         onClick={onClose}
-                        className="group flex items-center justify-between border border-black/5 p-4 hover:bg-black transition-all"
+                        className="flex items-center gap-6 p-4 bg-white border border-black/[0.03] hover:border-black/20 transition-all group"
                       >
-                        <div className="flex items-center gap-4">
-                          <div className="h-12 w-12 bg-black/5 flex items-center justify-center grayscale group-hover:invert transition-all">
-                             {product.images?.edges?.[0]?.node?.url && (
-                               <img src={product.images.edges[0].node.url} alt="" className="h-[80%] w-[80%] object-contain" />
-                             )}
-                          </div>
-                          <h3 className="font-ndot text-lg uppercase text-black group-hover:text-white transition-colors">{product.title}</h3>
+                        <div className="h-16 w-16 bg-[#F6F6F6] p-2 flex items-center justify-center">
+                           {product.images?.edges?.[0]?.node?.url && (
+                             <img src={product.images.edges[0].node.url} alt="" className="h-full w-full object-contain" />
+                           )}
                         </div>
-                        <ArrowRight strokeWidth={1} size={20} className="text-black group-hover:text-white opacity-0 group-hover:opacity-100 transition-all" />
+                        <h3 className="font-ndot text-sm uppercase text-black">{product.title}</h3>
                       </Link>
                     ))}
                   </div>
@@ -118,27 +108,21 @@ export default function Search({ isOpen, onClose }: SearchProps) {
 
               {/* SEARCH RESULTS */}
               {results.length > 0 && (
-                <div className="grid grid-cols-1 gap-2 animate-in fade-in duration-300">
-                  <p className="font-ntypeMono text-[10px] uppercase tracking-widest text-black/50 mb-4">
-                    Matches_Found: {results.length.toString().padStart(2, '0')}
+                <div className="grid grid-cols-1 animate-in fade-in duration-300">
+                  <p className="font-ntypeMono text-[10px] uppercase tracking-[0.2em] text-black/60 mb-8">
+                    Results ({results.length})
                   </p>
                   {results.map((product: any) => (
                     <Link 
                       key={product.handle}
                       href={`/products/${product.handle}`}
                       onClick={onClose}
-                      className="group flex items-center justify-between border border-black/5 p-6 hover:bg-black transition-all"
+                      className="group flex items-center justify-between py-8 border-b border-black/[0.05] hover:bg-white transition-all px-6 -mx-6"
                     >
-                      <div className="flex items-center gap-6">
-                        <div className="h-16 w-16 bg-black/5 flex items-center justify-center grayscale group-hover:invert transition-all">
-                          {product.images?.edges?.[0]?.node?.url && <img src={product.images.edges[0].node.url} alt="" className="h-[80%] w-[80%] object-contain" />}
-                        </div>
-                        <div>
-                          <h3 className="font-ndot text-xl uppercase group-hover:text-white text-black transition-colors">{product.title}</h3>
-                          <p className="font-ntypeMono text-[10px] text-black/40 group-hover:text-white/40 uppercase">UID: {product.handle}</p>
-                        </div>
+                      <div className="flex items-center gap-10">
+                        <h3 className="font-ndot text-3xl uppercase text-black">{product.title}</h3>
                       </div>
-                      <ArrowRight strokeWidth={1} size={24} className="text-black group-hover:text-white opacity-0 group-hover:opacity-100 transition-all" />
+                      <ArrowRight strokeWidth={1} size={28} className="text-black opacity-0 -translate-x-6 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
                     </Link>
                   ))}
                 </div>
@@ -146,8 +130,10 @@ export default function Search({ isOpen, onClose }: SearchProps) {
 
               {/* NO RESULTS */}
               {query.length > 0 && results.length === 0 && !isLoading && (
-                <div className="py-20 text-center border border-dashed border-black/10 animate-in zoom-in-95 duration-500">
-                   <p className="font-ntypeMono text-[10px] uppercase text-black/40">! Error: No_Matching_Units_In_Database</p>
+                <div className="py-32 text-center">
+                   <p className="font-ntypeMono text-[10px] uppercase text-black/60 tracking-widest">
+                     No results found for "{query}"
+                   </p>
                 </div>
               )}
             </div>

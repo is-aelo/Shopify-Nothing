@@ -48,8 +48,58 @@ export async function shopifyFetch({
 }
 
 /**
- * NEW: Get Cart Status
- * Ginagamit ito para malaman kung converted na ang cart into an order.
+ * Fetch Products by Collection Handle
+ * Ginagamit para sa PHONES, AUDIO, WATCHES, etc. base sa Collections sa Shopify
+ */
+export async function getProductsByCollection(handle: string) {
+  return shopifyFetch({
+    query: `
+      query getCollection($handle: String!) {
+        collection(handle: $handle) {
+          title
+          description
+          products(first: 100) {
+            edges {
+              node {
+                id
+                title
+                handle
+                variants(first: 1) {
+                  edges {
+                    node {
+                      id
+                      price {
+                        amount
+                        currencyCode
+                      }
+                      compareAtPrice {
+                        amount
+                        currencyCode
+                      }
+                    }
+                  }
+                }
+                images(first: 1) {
+                  edges {
+                    node {
+                      url
+                      altText
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    `,
+    variables: { handle },
+    tags: ['products', `collection-${handle}`]
+  });
+}
+
+/**
+ * Get Cart Status
  */
 export async function getCart(cartId: string) {
   const query = `
@@ -82,8 +132,7 @@ export async function getCart(cartId: string) {
 }
 
 /**
- * UPDATED: CART-BASED CHECKOUT
- * Ngayon, ibinabalik na rin natin ang 'id' ng cart.
+ * Create Checkout / Cart
  */
 export async function createCheckout(lineItems: { variantId: string; quantity: number }[]) {
   const query = `
@@ -132,7 +181,6 @@ export async function createCheckout(lineItems: { variantId: string; quantity: n
       return null;
     }
 
-    // Ibinabalik na natin ang id para ma-track sa frontend
     return {
       cartId: cart.id,
       webUrl: cart.checkoutUrl
@@ -143,10 +191,13 @@ export async function createCheckout(lineItems: { variantId: string; quantity: n
   }
 }
 
+/**
+ * Fetch All Products
+ */
 export async function getAllProducts() {
   return shopifyFetch({
     query: `{
-      products(first: 10) {
+      products(first: 100) {
         edges {
           node {
             id
@@ -184,11 +235,60 @@ export async function getAllProducts() {
   });
 }
 
+/**
+ * Fetch Products by Category (Product Type)
+ * Optional fallback ito kung ayaw gumamit ng Collections
+ */
+export async function getProductsByCategory(category: string) {
+  return shopifyFetch({
+    query: `
+      query getProductsByCategory($query: String!) {
+        products(first: 100, query: $query) {
+          edges {
+            node {
+              id
+              title
+              handle
+              variants(first: 1) {
+                edges {
+                  node {
+                    id
+                    price {
+                      amount
+                      currencyCode
+                    }
+                    compareAtPrice {
+                      amount
+                      currencyCode
+                    }
+                  }
+                }
+              }
+              images(first: 1) {
+                edges {
+                  node {
+                    url
+                    altText
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    `,
+    variables: {
+      query: `product_type:${category}`
+    },
+    tags: ['products', `category-${category}`]
+  });
+}
+
 export async function getSearchResults(searchTerm: string) {
   return shopifyFetch({
     query: `
       query getProducts($query: String!) {
-        products(first: 10, query: $query) {
+        products(first: 20, query: $query) {
           edges {
             node {
               id
