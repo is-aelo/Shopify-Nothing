@@ -48,8 +48,49 @@ export async function shopifyFetch({
 }
 
 /**
+ * Add to Cart / Update Cart
+ * Ito ang gagamitin sa ProductActionMenu para mag-sync ang "Added to Cart" analytics
+ */
+export async function addToCart(cartId: string | null, lineItems: { variantId: string; quantity: number }[]) {
+  const mutation = cartId 
+    ? `
+      mutation cartLinesAdd($cartId: ID!, $lines: [CartLineInput!]!) {
+        cartLinesAdd(cartId: $cartId, lines: $lines) {
+          cart { id, checkoutUrl, totalQuantity }
+          userErrors { field, message }
+        }
+      }
+    `
+    : `
+      mutation cartCreate($input: CartInput!) {
+        cartCreate(input: $input) {
+          cart { id, checkoutUrl, totalQuantity }
+          userErrors { field, message }
+        }
+      }
+    `;
+
+  const variables = cartId 
+    ? { cartId, lines: lineItems.map(item => ({ merchandiseId: item.variantId, quantity: item.quantity })) }
+    : { input: { lines: lineItems.map(item => ({ merchandiseId: item.variantId, quantity: item.quantity })) } };
+
+  try {
+    const res = await shopifyFetch({ query: mutation, variables });
+    const data = cartId ? res.body?.data?.cartLinesAdd : res.body?.data?.cartCreate;
+    
+    if (data?.userErrors?.length > 0) {
+      console.error('[CART_ERROR]:', data.userErrors);
+      return null;
+    }
+    return data?.cart;
+  } catch (error) {
+    console.error('[CART_API_SYSTEM_ERROR]:', error);
+    return null;
+  }
+}
+
+/**
  * Fetch Products by Collection Handle
- * Ginagamit para sa PHONES, AUDIO, WATCHES, etc. base sa Collections sa Shopify
  */
 export async function getProductsByCollection(handle: string) {
   return shopifyFetch({
@@ -68,23 +109,14 @@ export async function getProductsByCollection(handle: string) {
                   edges {
                     node {
                       id
-                      price {
-                        amount
-                        currencyCode
-                      }
-                      compareAtPrice {
-                        amount
-                        currencyCode
-                      }
+                      price { amount, currencyCode }
+                      compareAtPrice { amount, currencyCode }
                     }
                   }
                 }
                 images(first: 1) {
                   edges {
-                    node {
-                      url
-                      altText
-                    }
+                    node { url, altText }
                   }
                 }
               }
@@ -106,12 +138,20 @@ export async function getCart(cartId: string) {
     query getCart($cartId: ID!) {
       cart(id: $cartId) {
         id
+        checkoutUrl
         totalQuantity
         lines(first: 10) {
           edges {
             node {
               id
               quantity
+              merchandise {
+                ... on ProductVariant {
+                  id
+                  title
+                  product { title }
+                }
+              }
             }
           }
         }
@@ -120,10 +160,7 @@ export async function getCart(cartId: string) {
   `;
 
   try {
-    const res = await shopifyFetch({
-      query,
-      variables: { cartId },
-    });
+    const res = await shopifyFetch({ query, variables: { cartId } });
     return res.body?.data?.cart;
   } catch (error) {
     console.error('[GET_CART_ERROR]:', error);
@@ -132,7 +169,7 @@ export async function getCart(cartId: string) {
 }
 
 /**
- * Create Checkout / Cart
+ * Create Checkout / Cart (Initial Creation)
  */
 export async function createCheckout(lineItems: { variantId: string; quantity: number }[]) {
   const query = `
@@ -142,11 +179,7 @@ export async function createCheckout(lineItems: { variantId: string; quantity: n
           id
           checkoutUrl
         }
-        userErrors {
-          code
-          field
-          message
-        }
+        userErrors { code, field, message }
       }
     }
   `;
@@ -162,9 +195,7 @@ export async function createCheckout(lineItems: { variantId: string; quantity: n
       variables: { 
         input: { 
           lines: formattedLineItems,
-          attributes: [
-            { key: "checkout_origin", value: "nothing_headless_ph" }
-          ]
+          attributes: [{ key: "checkout_origin", value: "nothing_headless_ph" }]
         } 
       },
     });
@@ -175,11 +206,7 @@ export async function createCheckout(lineItems: { variantId: string; quantity: n
     }
 
     const cart = res.body?.data?.cartCreate?.cart;
-    
-    if (!cart || !cart.checkoutUrl) {
-      console.error('[CART_NULL]: No checkout URL returned.');
-      return null;
-    }
+    if (!cart) return null;
 
     return {
       cartId: cart.id,
@@ -208,23 +235,14 @@ export async function getAllProducts() {
               edges {
                 node {
                   id
-                  price {
-                    amount
-                    currencyCode
-                  }
-                  compareAtPrice {
-                    amount
-                    currencyCode
-                  }
+                  price { amount, currencyCode }
+                  compareAtPrice { amount, currencyCode }
                 }
               }
             }
             images(first: 1) {
               edges {
-                node {
-                  url
-                  altText
-                }
+                node { url, altText }
               }
             }
           }
@@ -237,7 +255,6 @@ export async function getAllProducts() {
 
 /**
  * Fetch Products by Category (Product Type)
- * Optional fallback ito kung ayaw gumamit ng Collections
  */
 export async function getProductsByCategory(category: string) {
   return shopifyFetch({
@@ -253,23 +270,14 @@ export async function getProductsByCategory(category: string) {
                 edges {
                   node {
                     id
-                    price {
-                      amount
-                      currencyCode
-                    }
-                    compareAtPrice {
-                      amount
-                      currencyCode
-                    }
+                    price { amount, currencyCode }
+                    compareAtPrice { amount, currencyCode }
                   }
                 }
               }
               images(first: 1) {
                 edges {
-                  node {
-                    url
-                    altText
-                  }
+                  node { url, altText }
                 }
               }
             }
@@ -277,9 +285,7 @@ export async function getProductsByCategory(category: string) {
         }
       }
     `,
-    variables: {
-      query: `product_type:${category}`
-    },
+    variables: { query: `product_type:${category}` },
     tags: ['products', `category-${category}`]
   });
 }
@@ -298,19 +304,13 @@ export async function getSearchResults(searchTerm: string) {
                 edges {
                   node {
                     id
-                    price {
-                      amount
-                      currencyCode
-                    }
+                    price { amount, currencyCode }
                   }
                 }
               }
               images(first: 1) {
                 edges {
-                  node {
-                    url
-                    altText
-                  }
+                  node { url, altText }
                 }
               }
             }
@@ -331,36 +331,21 @@ export async function getProductByHandle(handle: string) {
           title
           handle
           descriptionHtml
-          options {
-            name
-            values
-          }
+          options { name, values }
           variants(first: 20) {
             edges {
               node {
                 id
                 title
-                selectedOptions {
-                  name
-                  value
-                }
-                price {
-                  amount
-                  currencyCode
-                }
-                image {
-                  url
-                  altText
-                }
+                selectedOptions { name, value }
+                price { amount, currencyCode }
+                image { url, altText }
               }
             }
           }
           images(first: 10) {
             edges {
-              node {
-                url
-                altText
-              }
+              node { url, altText }
             }
           }
         }
@@ -391,19 +376,13 @@ export async function getProductRecommendations(productId: string) {
           edges {
             node {
               id
-              price {
-                amount
-                currencyCode
-              }
+              price { amount, currencyCode }
             }
           }
         }
         images(first: 1) {
           edges {
-            node {
-              url
-              altText
-            }
+            node { url, altText }
           }
         }
       }

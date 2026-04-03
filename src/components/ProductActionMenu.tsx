@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { Plus, Minus, CreditCard, ShoppingBag } from "lucide-react";
 import { useCartStore } from '@/store/useCartStore';
+import { addToCart } from '@/lib/shopify'; // Siguraduhing na-export ito sa shopify.ts
 
 interface ProductActionMenuProps {
   product: any;
@@ -36,12 +37,13 @@ export default function ProductActionMenu({
       maximumFractionDigits: 0 
     }).format(Number(amt));
 
-  const handleAddToBasket = () => {
+  const handleAddToBasket = async () => {
     if (!selectedVariant) return;
 
+    // --- 1. LOCAL UI UPDATE (Zustand) ---
     addItem({
       id: product.id,
-      variantId: selectedVariant.id, // Shopify GID
+      variantId: selectedVariant.id,
       title: product.title,
       variantTitle: selectedVariant.title,
       price: selectedVariant.price,
@@ -56,6 +58,53 @@ export default function ProductActionMenu({
       })) || []
     });
 
+    // --- 2. SHOPIFY SERVER SYNC (Analytics & Admin) ---
+    try {
+      // Kunin ang existing cartId sa localStorage kung meron
+      const existingCartId = localStorage.getItem('shopify_cart_id');
+      
+      const cartResult = await addToCart(existingCartId, [
+        {
+          variantId: selectedVariant.id,
+          quantity: quantity,
+        }
+      ]);
+
+      if (cartResult?.id) {
+        localStorage.setItem('shopify_cart_id', cartResult.id);
+        console.log("✅ Shopify: Cart synced for Analytics.");
+      }
+    } catch (error) {
+      console.error("❌ Shopify Sync Error:", error);
+    }
+
+    // --- 3. KLAVIYO TRACKING (Marketing & Email Flow) ---
+    try {
+      const rawPrice = selectedVariant.price.amount.toString().replace(/[^0-9.]/g, '');
+      const numericPrice = parseFloat(rawPrice);
+
+      const response = await fetch('/api/klaviyo/track', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: 'talingting.eloise@gmail.com', // Pwede itong palitan ng dynamic user email later
+          eventName: 'Added to Cart',
+          productName: product.title,
+          price: numericPrice, 
+          itemID: selectedVariant.id
+        }),
+      });
+
+      if (response.ok) {
+        console.log("🚀 Klaviyo: 'Added to Cart' event recorded.");
+      }
+    } catch (error) {
+      console.error("❌ Klaviyo Sync Error:", error);
+    }
+
+    // --- 4. OPEN UI ---
     openCart();
   };
 
