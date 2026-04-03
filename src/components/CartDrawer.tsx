@@ -4,10 +4,20 @@ import { useState } from 'react';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { useCartStore } from '@/store/useCartStore';
 import { X, Plus, Minus, ShoppingBag, Loader2, ChevronDown, ArrowRight, Lock, Trash2, RotateCcw } from 'lucide-react';
-import { createCheckout } from '@/lib/shopify';
 
 export default function CartDrawer() {
-  const { isCartOpen, closeCart, cartItems, updateQuantity, removeItem, updateVariant, clearCart } = useCartStore();
+  const {
+    isCartOpen,
+    closeCart,
+    cartItems,
+    checkoutUrl,
+    updateQuantity,
+    removeItem,
+    addItem,
+    clearCart,
+    isLoading,
+  } = useCartStore();
+
   const [isRedirecting, setIsRedirecting] = useState(false);
 
   // Subtotal calculation
@@ -16,40 +26,41 @@ export default function CartDrawer() {
     0
   );
 
-  const handleCheckout = async () => {
-    if (cartItems.length === 0 || isRedirecting) return;
-    
+  const handleCheckout = () => {
+    if (cartItems.length === 0 || isRedirecting || !checkoutUrl) return;
+
     setIsRedirecting(true);
-    
-    try {
-      const lineItems = cartItems.map(item => ({
-        variantId: item.variantId,
-        quantity: item.quantity,
-      }));
 
-      // Ngayon, ang checkout ay may kasama nang cartId
-      const checkout = await createCheckout(lineItems);
+    // checkoutUrl already comes from Shopify via the cart mutations.
+    // Just redirect — Shopify handles everything from here.
+    window.location.href = checkoutUrl;
+  };
 
-      if (checkout?.webUrl && checkout?.cartId) {
-        /**
-         * REAL-TIME SYNC LOGIC:
-         * Ise-save natin ang cartId para ma-verify ng CartRecovery.tsx
-         * kung nabayaran na ba ang cart na ito sa Shopify side.
-         */
-        localStorage.setItem('shopify_cart_id', checkout.cartId);
-        localStorage.setItem('nothing_checkout_pending', 'true');
-        
-        // Redirect to Shopify
-        window.location.href = checkout.webUrl;
-      } else {
-        console.error("Failed to retrieve checkout URL or Cart ID");
-        alert("Checkout is currently unavailable. Please try again.");
-        setIsRedirecting(false);
-      }
-    } catch (error) {
-      console.error("CHECKOUT_ERROR:", error);
-      setIsRedirecting(false);
-    }
+  /**
+   * Variant change:
+   * Since updateVariant is no longer in the store (it was local-only),
+   * we remove the old line and add the new variant as a fresh line.
+   */
+  const handleVariantChange = async (
+    oldLineId: string,
+    newVariant: any,
+    currentQuantity: number,
+    allVariants: any[]
+  ) => {
+    if (isRedirecting) return;
+
+    // Remove old line first, then add new variant
+    await removeItem(oldLineId);
+    await addItem({
+      variantId: newVariant.id,
+      title: newVariant.product?.title ?? '',
+      variantTitle: newVariant.title,
+      price: newVariant.price,
+      image: newVariant.image?.url ?? '',
+      quantity: currentQuantity,
+      handle: newVariant.product?.handle ?? '',
+      allVariants,
+    });
   };
 
   return (
@@ -90,7 +101,7 @@ export default function CartDrawer() {
 
               <div className="flex items-center gap-4">
                 {cartItems.length > 0 && !isRedirecting && (
-                  <button 
+                  <button
                     onClick={clearCart}
                     className="font-ntype text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] text-red-500 hover:text-red-600 transition-colors flex items-center gap-1.5 py-2"
                   >
@@ -132,7 +143,7 @@ export default function CartDrawer() {
                       {cartItems.map((item) => (
                         <motion.div
                           layout
-                          key={item.variantId}
+                          key={item.lineId}  // ← lineId, not variantId
                           className="flex gap-4 py-6 border-b border-black/[0.07] last:border-b-0"
                         >
                           <div className="w-[80px] h-[80px] xs:w-[90px] xs:h-[90px] flex-shrink-0 bg-white rounded-xl border border-black/[0.05] p-2 shadow-sm">
@@ -150,8 +161,9 @@ export default function CartDrawer() {
                               </h3>
                               {!isRedirecting && (
                                 <button
-                                  onClick={() => removeItem(item.variantId)}
-                                  className="text-black/15 hover:text-red-500 p-2 -mr-2 -mt-2 transition-colors"
+                                  onClick={() => removeItem(item.lineId)}  // ← lineId
+                                  disabled={isLoading}
+                                  className="text-black/15 hover:text-red-500 p-2 -mr-2 -mt-2 transition-colors disabled:opacity-30"
                                 >
                                   <Trash2 size={16} strokeWidth={1.5} />
                                 </button>
@@ -162,11 +174,20 @@ export default function CartDrawer() {
                               {item.allVariants && item.allVariants.length > 1 ? (
                                 <div className="relative inline-flex items-center">
                                   <select
-                                    disabled={isRedirecting}
+                                    disabled={isRedirecting || isLoading}
                                     value={item.variantId}
                                     onChange={(e) => {
-                                      const selected = item.allVariants?.find((v: any) => v.id === e.target.value);
-                                      if (selected) updateVariant(item.variantId, selected);
+                                      const selected = item.allVariants?.find(
+                                        (v: any) => v.id === e.target.value
+                                      );
+                                      if (selected) {
+                                        handleVariantChange(
+                                          item.lineId,       // ← lineId
+                                          selected,
+                                          item.quantity,
+                                          item.allVariants ?? []
+                                        );
+                                      }
                                     }}
                                     className="appearance-none bg-black/[0.04] rounded-md pl-3 pr-8 py-2 font-ntype text-[10px] font-bold uppercase tracking-wider text-black/50 focus:outline-none min-h-[32px] cursor-pointer disabled:cursor-default"
                                   >
@@ -186,16 +207,18 @@ export default function CartDrawer() {
                             <div className="mt-5 flex items-center justify-between">
                               <div className="flex items-center rounded-lg border border-black/[0.08] bg-white shadow-sm overflow-hidden">
                                 <button
-                                  disabled={isRedirecting}
-                                  onClick={() => updateQuantity(item.variantId, Math.max(1, item.quantity - 1))}
+                                  disabled={isRedirecting || isLoading}
+                                  onClick={() => updateQuantity(item.lineId, Math.max(1, item.quantity - 1))}  // ← lineId
                                   className="w-10 h-10 flex items-center justify-center hover:bg-black/[0.02] active:bg-black/[0.04] transition-colors disabled:opacity-30"
                                 >
                                   <Minus size={12} strokeWidth={2.5} />
                                 </button>
-                                <span className="w-8 text-center font-ndot text-[12px] text-[#07080F] select-none">{item.quantity}</span>
+                                <span className="w-8 text-center font-ndot text-[12px] text-[#07080F] select-none">
+                                  {isLoading ? <Loader2 size={12} className="animate-spin mx-auto" /> : item.quantity}
+                                </span>
                                 <button
-                                  disabled={isRedirecting}
-                                  onClick={() => updateQuantity(item.variantId, item.quantity + 1)}
+                                  disabled={isRedirecting || isLoading}
+                                  onClick={() => updateQuantity(item.lineId, item.quantity + 1)}  // ← lineId
                                   className="w-10 h-10 flex items-center justify-center border-l border-black/5 hover:bg-black/[0.02] active:bg-black/[0.04] transition-colors disabled:opacity-30"
                                 >
                                   <Plus size={12} strokeWidth={2.5} />
@@ -235,7 +258,7 @@ export default function CartDrawer() {
 
                 <motion.button
                   onClick={handleCheckout}
-                  disabled={isRedirecting}
+                  disabled={isRedirecting || isLoading || !checkoutUrl}
                   whileTap={{ scale: 0.96 }}
                   className="w-full bg-[#07080F] text-white rounded-[12px] py-5 sm:py-6 flex items-center justify-center gap-3 shadow-xl shadow-black/10 transition-all hover:bg-black/90 disabled:bg-black/40 disabled:cursor-not-allowed"
                 >

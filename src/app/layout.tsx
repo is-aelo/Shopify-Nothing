@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { Suspense } from "react";
+import CartProvider from "@/components/CartProvider";
 import CartDrawer from "@/components/CartDrawer";
 import CartRecovery from "@/components/CartRecovery";
 
@@ -54,18 +55,21 @@ export default function RootLayout({
           min-h-full flex flex-col bg-pureWhite text-black
         `}
       >
-        {/* CartRecovery needs Suspense because useSearchParams() 
-          triggers client-side rendering during the build process.
-        */}
-        <Suspense fallback={null}>
-          <CartRecovery />
-        </Suspense>
+        {/* CartProvider — bootstraps cart state from Shopify on every page load */}
+        <CartProvider>
 
-        {/* Main Content */}
-        {children}
+          {/* CartRecovery — detects completed/expired carts, runs silently */}
+          <Suspense fallback={null}>
+            <CartRecovery />
+          </Suspense>
 
-        {/* Global Cart Drawer Overlay */}
-        <CartDrawer />
+          {/* Main Content */}
+          {children}
+
+          {/* Global Cart Drawer Overlay */}
+          <CartDrawer />
+
+        </CartProvider>
       </body>
     </html>
   );

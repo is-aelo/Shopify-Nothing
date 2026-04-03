@@ -3,7 +3,6 @@
 import { motion } from 'framer-motion';
 import { Plus, Minus, CreditCard, ShoppingBag } from "lucide-react";
 import { useCartStore } from '@/store/useCartStore';
-import { addToCart } from '@/lib/shopify'; // Siguraduhing na-export ito sa shopify.ts
 
 interface ProductActionMenuProps {
   product: any;
@@ -30,95 +29,84 @@ export default function ProductActionMenu({
   const addItem = useCartStore((state) => state.addItem);
   const openCart = useCartStore((state) => state.openCart);
 
-  const formatPrice = (amt: string | number, code: string) => 
-    new Intl.NumberFormat('en-PH', { 
-      style: 'currency', 
+  const formatPrice = (amt: string | number, code: string) =>
+    new Intl.NumberFormat('en-PH', {
+      style: 'currency',
       currency: code || 'PHP',
-      maximumFractionDigits: 0 
+      maximumFractionDigits: 0
     }).format(Number(amt));
 
   const handleAddToBasket = async () => {
     if (!selectedVariant) return;
 
-    // --- 1. LOCAL UI UPDATE (Zustand) ---
-    addItem({
-      id: product.id,
+    // addItem handles everything:
+    //   - createCart() if no cartId exists yet
+    //   - addCartLines() to sync with Shopify backend
+    //   - updates local cartItems mirror in the store
+    await addItem({
       variantId: selectedVariant.id,
       title: product.title,
       variantTitle: selectedVariant.title,
       price: selectedVariant.price,
-      image: product.images?.edges?.[0]?.node?.url || product.featuredImage?.url,
+      image: selectedVariant.image?.url
+        ?? product.images?.edges?.[0]?.node?.url
+        ?? product.featuredImage?.url
+        ?? '',
       quantity: quantity,
       handle: product.handle,
       allVariants: product.variants?.edges?.map((edge: any) => ({
         id: edge.node.id,
         title: edge.node.title,
         price: edge.node.price,
-        image: edge.node.image?.url
-      })) || []
+        image: edge.node.image?.url ?? '',
+        product: {
+          title: product.title,
+          handle: product.handle,
+        }
+      })) ?? []
     });
 
-    // --- 2. SHOPIFY SERVER SYNC (Analytics & Admin) ---
-    try {
-      // Kunin ang existing cartId sa localStorage kung meron
-      const existingCartId = localStorage.getItem('shopify_cart_id');
-      
-      const cartResult = await addToCart(existingCartId, [
-        {
-          variantId: selectedVariant.id,
-          quantity: quantity,
-        }
-      ]);
-
-      if (cartResult?.id) {
-        localStorage.setItem('shopify_cart_id', cartResult.id);
-        console.log("✅ Shopify: Cart synced for Analytics.");
-      }
-    } catch (error) {
-      console.error("❌ Shopify Sync Error:", error);
-    }
-
-    // --- 3. KLAVIYO TRACKING (Marketing & Email Flow) ---
+    // --- KLAVIYO TRACKING (Marketing & Email Flow) ---
     try {
       const rawPrice = selectedVariant.price.amount.toString().replace(/[^0-9.]/g, '');
       const numericPrice = parseFloat(rawPrice);
 
       const response = await fetch('/api/klaviyo/track', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: 'talingting.eloise@gmail.com', // Pwede itong palitan ng dynamic user email later
+          email: 'talingting.eloise@gmail.com', // Replace with dynamic user email later
           eventName: 'Added to Cart',
           productName: product.title,
-          price: numericPrice, 
+          price: numericPrice,
           itemID: selectedVariant.id
         }),
       });
 
       if (response.ok) {
-        console.log("🚀 Klaviyo: 'Added to Cart' event recorded.");
+        console.log("[KLAVIYO]: 'Added to Cart' event recorded.");
       }
     } catch (error) {
-      console.error("❌ Klaviyo Sync Error:", error);
+      console.error('[KLAVIYO_SYNC_ERROR]:', error);
     }
 
-    // --- 4. OPEN UI ---
+    // Open cart drawer
+    // Note: addItem already sets isCartOpen: true in the store,
+    // but calling openCart() here is fine as a safety net.
     openCart();
   };
 
   return (
     <div className="fixed bottom-6 md:bottom-8 left-0 right-0 z-50 px-4 pointer-events-none">
-      <motion.div 
-        initial={{ y: 60, opacity: 0 }} 
+      <motion.div
+        initial={{ y: 60, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
         className="max-w-[580px] mx-auto bg-white/80 backdrop-blur-2xl border border-[#E1E2E3] rounded-full p-1.5 md:p-2 shadow-2xl flex items-center gap-1.5 md:gap-2 pointer-events-auto"
       >
         <div className="hidden sm:flex items-center px-4 gap-4 border-r border-[#E1E2E3]">
-          <button 
-            onClick={() => setQuantity(Math.max(1, quantity - 1))} 
+          <button
+            onClick={() => setQuantity(Math.max(1, quantity - 1))}
             className="hover:opacity-40 transition-opacity text-[#07080F]"
             aria-label="Decrease quantity"
           >
@@ -127,16 +115,16 @@ export default function ProductActionMenu({
           <span className="font-ndot text-xs w-4 text-center tabular-nums text-[#07080F]">
             {quantity}
           </span>
-          <button 
-            onClick={() => setQuantity(quantity + 1)} 
+          <button
+            onClick={() => setQuantity(quantity + 1)}
             className="hover:opacity-40 transition-opacity text-[#07080F]"
             aria-label="Increase quantity"
           >
             <Plus size={14} strokeWidth={1.5} />
           </button>
         </div>
-        
-        <button 
+
+        <button
           onClick={handleAddToBasket}
           disabled={!selectedVariant}
           className="flex-1 bg-white border border-[#E1E2E3] text-[#07080F] h-10 md:h-12 rounded-full font-ndot uppercase text-[9px] md:text-[10px] tracking-[0.1em] hover:bg-[#F1F1F1] transition-all duration-300 shadow-sm flex items-center justify-center gap-2 disabled:opacity-50"
@@ -144,8 +132,8 @@ export default function ProductActionMenu({
           <ShoppingBag size={14} strokeWidth={1.5} />
           <span className="hidden xs:inline">Basket</span>
         </button>
-        
-        <button 
+
+        <button
           onClick={handleBuyNow}
           disabled={!selectedVariant}
           className="flex-[1.5] md:flex-[2] bg-[#07080F] text-white h-10 md:h-12 rounded-full font-ndot uppercase tracking-[0.1em] text-[9px] md:text-[10px] flex flex-col items-center justify-center leading-none px-6 md:px-10 shadow-xl active:scale-[0.98] transition-all overflow-hidden disabled:opacity-50"
@@ -154,9 +142,9 @@ export default function ProductActionMenu({
             <CreditCard size={16} strokeWidth={1.5} />
             <span>Buy Now</span>
           </div>
-          
+
           {isOnSale && price && (
-            <motion.span 
+            <motion.span
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
               className="text-[8px] md:text-[9px] font-ntypeHeadline font-bold text-white/50 tracking-widest mt-0.5 uppercase"
