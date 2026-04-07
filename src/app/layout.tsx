@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { Suspense } from "react";
+import Script from "next/script"; // Import Next.js Script component
 import CartProvider from "@/components/CartProvider";
 import CartDrawer from "@/components/CartDrawer";
 import CartRecovery from "@/components/CartRecovery";
@@ -43,6 +44,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Replace 'YOUR_PUBLIC_API_KEY' with your actual 6-character Klaviyo Public API Key
+  const KLAVIYO_PUBLIC_KEY = "YOUR_PUBLIC_API_KEY"; 
+
   return (
     <html lang="en" className="h-full antialiased">
       <body
@@ -55,6 +59,13 @@ export default function RootLayout({
           min-h-full flex flex-col bg-pureWhite text-black
         `}
       >
+        {/* Klaviyo Onsite Script - This bridges the gap between Next.js and Klaviyo Tracking */}
+        <Script
+          id="klaviyo-onsite"
+          strategy="beforeInteractive"
+          src={`https://klaviyo.com{KLAVIYO_PUBLIC_KEY}/klaviyo.js`}
+        />
+
         {/* CartProvider — bootstraps cart state from Shopify on every page load */}
         <CartProvider>
 
